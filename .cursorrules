@@ -1,0 +1,27 @@
+{
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "no-redeclare": "error",
+      "no-var": "error",
+      "prefer-const": "warn",
+      "no-duplicate-imports": "error",
+      "no-unused-vars": "warn",
+      "no-undef": "error"
+    }
+  },
+  "formatter": {
+    "enabled": true,
+    "indentSize": 2
+  },
+  "tabs": {
+    "maxCount": 20
+  },
+  "validation": {
+    "warnBeforeLargeEdits": true,
+    "warnLargeFileSize": true
+  },
+  "codeCompletion": {
+    "inlineCompletion": true
+  }
+} 
