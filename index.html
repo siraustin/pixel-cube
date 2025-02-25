@@ -81,7 +81,7 @@
                                             Take Snapshot
                                         </button>
                                         <button id="recordVideo" class="btn btn-danger">
-                                            Capture Frames
+                                            Capture Video 
                                         </button>
                                     </div>
                                 </div>
@@ -125,7 +125,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="mb-0">Debug Logs</h6>
-                    <small class="text-muted" id="versionInfo">v$GIT_VERSION</small>
+                    <small class="text-muted" id="versionInfo">v0.2a</small>
                 </div>
                 <div>
                     <!-- <button id="testLogBtn" class="btn btn-sm btn-primary me-2">Test Log</button> -->
@@ -529,7 +529,7 @@
                 }
             }
             
-            // Record video function - simpler approach
+            // Update the startRecording function to show time in tenths of a second
             function startRecording() {
                 if (isRecording) return;
                 if (video.readyState !== video.HAVE_ENOUGH_DATA) {
@@ -540,18 +540,28 @@
                 debugLog("Starting video recording...");
                 isRecording = true;
                 recordingFrames = [];
-                recordVideoButton.textContent = "Recording...";
+                recordVideoButton.textContent = "0.0s of 7.0s"; // Initialize with 0.0 seconds
                 recordVideoButton.disabled = true;
                 
                 // Record for 7 seconds (at 5 frames per second = 35 frames)
                 let framesLeft = 35;
                 let totalFrames = framesLeft;
+                let elapsedTime = 0; // Track elapsed time in tenths of seconds
                 
                 debugLog(`Recording ${framesLeft} frames (7 seconds) at ${canvas.width}x${canvas.height}`);
+                
+                // Timer to update elapsed time display
+                const timerInterval = setInterval(() => {
+                    elapsedTime += 0.1; // Add one tenth of a second
+                    // Format to show one decimal place
+                    const timeDisplay = elapsedTime.toFixed(1);
+                    recordVideoButton.textContent = `${timeDisplay}s of 7.0s`;
+                }, 100); // Update every 100ms (1/10 second)
                 
                 // Capture a frame with secure method
                 function captureFrame() {
                     if (framesLeft <= 0 || !isRecording) {
+                        clearInterval(timerInterval); // Stop the timer when done
                         debugLog(`Captured all ${totalFrames} frames`);
                         finishRecording();
                         return;
@@ -568,6 +578,11 @@
                         frameCtx.fillStyle = "#000000";
                         frameCtx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
                         
+                        if (currentFacingMode === 'user') {
+                            frameCtx.translate(frameCanvas.width, 0);
+                            frameCtx.scale(-1, 1);
+                        }
+                        
                         // Copy the current canvas content to the frame
                         frameCtx.drawImage(canvas, 0, 0);
                         
@@ -578,10 +593,8 @@
                         debugLog(`Error capturing frame: ${e.message}`, true);
                     }
                     
-                    // Update button to show progress
+                    // Update button to show progress (we're now using the timer instead)
                     framesLeft--;
-                    const progress = Math.round(((totalFrames-framesLeft)/totalFrames) * 100);
-                    recordVideoButton.textContent = `Recording ${progress}%`;
                     
                     // Capture the next frame in 200ms (5fps)
                     setTimeout(captureFrame, 200);
@@ -591,112 +604,366 @@
                 captureFrame();
             }
             
-            // Update the finishRecording function to include a timeout to prevent hanging
+            // Update the finishRecording function with the fixes and make sure all variables are properly initialized
             function finishRecording() {
                 if (!isRecording) return;
                 
-                let processingDots = 0;
-                
-                // Calculate the width needed for the longest possible text
+                // Set button to processing state
                 recordVideoButton.textContent = "Processing...";
-                const neededWidth = recordVideoButton.offsetWidth;
-                
-                // Set fixed width to accommodate the maximum text length
-                recordVideoButton.style.width = `${neededWidth + 10}px`; // Add 10px padding
-                
-                // Start the processing animation with fixed-width dots
-                const processingInterval = setInterval(() => {
-                    processingDots = (processingDots + 1) % 4;
-                    const dots = '.'.repeat(processingDots).padEnd(3);
-                    recordVideoButton.textContent = `Processing${dots}`;
-                }, 500);
-                
                 recordVideoButton.disabled = true;
-                debugLog("Processing video frames...");
+                
+                debugLog("Processing captured frames: " + recordingFrames.length);
                 
                 try {
-                    // Create a static image grid (more reliable)
-                    debugLog("Creating image grid from " + recordingFrames.length + " frames");
-                    
-                    if (!recordingFrames || recordingFrames.length === 0) {
-                        clearInterval(processingInterval);
-                        throw new Error("No frames were captured");
-                    }
+                    // First create the static grid view (as a fallback and thumbnail)
+                    debugLog("Creating static image grid");
                     
                     // Create a canvas for the static image
-                    const staticCanvas = document.createElement('canvas');
-                    staticCanvas.width = 640;
-                    staticCanvas.height = 480;
-                    const ctx = staticCanvas.getContext('2d');
+                    const gridCanvas = document.createElement('canvas');
+                    gridCanvas.width = 640;
+                    gridCanvas.height = 480;
+                    const ctx = gridCanvas.getContext('2d');
                     
                     // Fill with black background
                     ctx.fillStyle = "#000";
-                    ctx.fillRect(0, 0, staticCanvas.width, staticCanvas.height);
+                    ctx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
                     
                     // Calculate grid layout
                     const gridSize = Math.ceil(Math.sqrt(recordingFrames.length));
-                    const cellWidth = Math.floor(staticCanvas.width / gridSize);
-                    const cellHeight = Math.floor(staticCanvas.height / gridSize);
+                    const cellWidth = Math.floor(gridCanvas.width / gridSize);
+                    const cellHeight = Math.floor(gridCanvas.height / gridSize);
                     
                     // Draw frames in a grid
                     recordingFrames.forEach((frame, i) => {
-                        const row = Math.floor(i / gridSize);
-                        const col = i % gridSize;
-                        const x = col * cellWidth;
-                        const y = row * cellHeight;
-                        
-                        // Draw the frame
-                        ctx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
-                        
-                        // Draw frame number
-                        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
-                        ctx.font = "14px Arial";
-                        ctx.fillText((i+1).toString(), x + 5, y + 20);
-                        
-                        debugLog(`Processed frame ${i+1}/${recordingFrames.length}`);
+                        try {
+                            const row = Math.floor(i / gridSize);
+                            const col = i % gridSize;
+                            const x = col * cellWidth;
+                            const y = row * cellHeight;
+                            
+                            // Draw the frame
+                            ctx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
+                            
+                            // Draw frame number
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                            ctx.font = "14px Arial";
+                            ctx.fillText((i+1).toString(), x + 5, y + 20);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Processing ${Math.round((i+1) / recordingFrames.length * 100)}%`;
+                        } catch (frameErr) {
+                            debugLog(`Error drawing frame ${i}: ${frameErr.message}`, true);
+                        }
                     });
                     
-                    // Convert to data URL
-                    const imageUrl = staticCanvas.toDataURL('image/png');
-                    debugLog("Successfully created grid image");
+                    // Get static grid as data URL
+                    const staticImageUrl = gridCanvas.toDataURL('image/png');
+                    debugLog("Created static image grid");
                     
-                    // Create snapshot element
+                    // Prepare frames for Web Animation API
+                    debugLog("Creating web animation from frames");
+                    
+                    // Create individual frame images as data URLs
+                    const frameDataUrls = [];
+                    const frameSize = 320; // Animation size
+                    
+                    // Create a temporary canvas for frame resizing
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = frameSize;
+                    tempCanvas.height = frameSize;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // Convert each frame to a data URL
+                    recordingFrames.forEach((frame, index) => {
+                        try {
+                            // Clear temp canvas
+                            tempCtx.fillStyle = "#000";
+                            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                            
+                            // Draw frame centered and scaled
+                            tempCtx.drawImage(frame, 0, 0, frame.width, frame.height, 
+                                             0, 0, tempCanvas.width, tempCanvas.height);
+                            
+                            // Get data URL
+                            const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.7); // Using JPEG for smaller size
+                            frameDataUrls.push(dataUrl);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Creating animation ${Math.round((index+1) / recordingFrames.length * 100)}%`;
+                        } catch (e) {
+                            debugLog(`Error processing frame ${index}: ${e.message}`, true);
+                        }
+                    });
+                    
+                    debugLog(`Created ${frameDataUrls.length} frame data URLs`);
+                    
+                    // Create a video download option
+                    debugLog("Creating downloadable video file");
+                    recordVideoButton.textContent = "Creating video...";
+
+                    // Create a canvas for video recording
+                    const videoCanvas = document.createElement('canvas');
+                    videoCanvas.width = frameSize;
+                    videoCanvas.height = frameSize;
+                    const videoCtx = videoCanvas.getContext('2d');
+
+                    // Create a media stream from the canvas
+                    const stream = videoCanvas.captureStream(30); // 30fps
+
+                    // Check which MIME types are supported
+                    function getSupportedMimeType() {
+                        const types = [
+                            'video/webm;codecs=vp9',
+                            'video/webm;codecs=vp8',
+                            'video/webm',
+                            'video/mp4',
+                            'video/mpeg'
+                        ];
+                        
+                        for (let type of types) {
+                            if (MediaRecorder.isTypeSupported(type)) {
+                                debugLog(`Using supported MIME type: ${type}`);
+                                return type;
+                            }
+                        }
+                        
+                        debugLog('No supported video MIME types found', true);
+                        return '';
+                    }
+
+                    // Get supported MIME type
+                    const mimeType = getSupportedMimeType();
+
+                    // Create MediaRecorder with supported type
+                    let mediaRecorder;
+                    try {
+                        const options = {};
+                        if (mimeType) {
+                            options.mimeType = mimeType;
+                            options.videoBitsPerSecond = 2500000; // 2.5 Mbps
+                        }
+                        
+                        mediaRecorder = new MediaRecorder(stream, options);
+                        debugLog(`MediaRecorder created with options: ${JSON.stringify(options)}`);
+                    } catch (err) {
+                        debugLog(`MediaRecorder error: ${err.message}`, true);
+                        // Continue with just the animation, without video recording
+                        throw new Error(`Video recording not supported: ${err.message}`);
+                    }
+
+                    // Store video chunks
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    // Create download buttons
+                    const downloadGridBtn = document.createElement('a');
+                    downloadGridBtn.className = 'btn btn-sm btn-outline-primary';
+                    downloadGridBtn.textContent = 'Download Grid';
+                    downloadGridBtn.href = staticImageUrl;
+                    downloadGridBtn.download = `pixel-cube-frames-${snapshotCount}.png`;
+
+                    const downloadVideoBtn = document.createElement('a');
+                    downloadVideoBtn.className = 'btn btn-sm btn-outline-primary disabled';
+                    downloadVideoBtn.textContent = 'Preparing Video...';
+                    
+                    // Set file extension based on MIME type
+                    const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    downloadVideoBtn.download = `pixel-cube-video-${snapshotCount}.${fileExtension}`;
+
+                    // Handle video completion
+                    mediaRecorder.onstop = () => {
+                        // Create blob from chunks
+                        const videoBlob = new Blob(chunks, { type: 'video/webm' });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        debugLog(`Video created: ${Math.round(videoBlob.size/1024)}KB`);
+                        
+                        // Update the download button to enable video download
+                        downloadVideoBtn.href = videoUrl;
+                        downloadVideoBtn.classList.remove('disabled');
+                        downloadVideoBtn.textContent = 'Download Video';
+                    };
+
+                    // Start recording
+                    mediaRecorder.start();
+
+                    // Create each frame for the video
+                    let frameIndex = 0;
+                    function processNextVideoFrame() {
+                        if (frameIndex >= frameDataUrls.length) {
+                            // All frames processed, finish video
+                            mediaRecorder.stop();
+                            return;
+                        }
+                        
+                        // Create an image from the current frame
+                        const img = new Image();
+                        img.onload = () => {
+                            // Draw the frame to the video canvas
+                            videoCtx.fillStyle = "#000";
+                            videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.drawImage(img, 0, 0, videoCanvas.width, videoCanvas.height);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Creating video ${Math.round((frameIndex+1) / frameDataUrls.length * 100)}%`;
+                            
+                            // Wait for next frame (matching our original 5fps)
+                            setTimeout(() => {
+                                frameIndex++;
+                                processNextVideoFrame();
+                            }, 200); // 200ms = 5fps
+                        };
+                        
+                        img.onerror = () => {
+                            debugLog(`Error loading frame ${frameIndex} for video`, true);
+                            frameIndex++;
+                            processNextVideoFrame();
+                        };
+                        
+                        img.src = frameDataUrls[frameIndex];
+                    }
+
+                    // Start processing frames
+                    processNextVideoFrame();
+
+                    // Create the controls differently
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'animation-controls d-flex mt-2 justify-content-between';
+
+                    // Create animation control buttons div
+                    const animBtnsDiv = document.createElement('div');
+                    animBtnsDiv.className = 'd-flex';
+
+                    // Play/pause button
+                    const playPauseBtn = document.createElement('button');
+                    playPauseBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                    playPauseBtn.textContent = 'Play';
+
+                    // Reset button
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.textContent = 'Reset';
+
+                    // Add buttons to their containers
+                    animBtnsDiv.appendChild(playPauseBtn);
+                    animBtnsDiv.appendChild(resetBtn);
+
+                    // Downloads div
+                    const downloadsDiv = document.createElement('div');
+                    downloadsDiv.className = 'd-flex';
+                    downloadsDiv.appendChild(downloadGridBtn);
+                    downloadsDiv.appendChild(document.createTextNode(' '));
+                    downloadsDiv.appendChild(downloadVideoBtn);
+
+                    // Add both groups to controls div
+                    controlsDiv.appendChild(animBtnsDiv);
+                    controlsDiv.appendChild(downloadsDiv);
+
+                    // Then update the card footer to remove the download button (since it's now in the controls)
+                    // Create card footer
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'card-footer text-center';
+                    cardFooter.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Frames: ${frameDataUrls.length}</small>
+                            <small class="text-success">5 fps animation</small>
+                        </div>
+                    `;
+
+                    // Create an element to show in gallery
                     const videoEl = document.createElement('div');
                     videoEl.className = 'col-12 col-md-6';
                     snapshotCount++;
                     
-                    videoEl.innerHTML = `
-                        <div class="card">
-                            <img src="${imageUrl}" class="card-img-top" alt="Frame Grid ${snapshotCount}">
-                            <div class="card-footer text-center">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="${imageUrl}" download="pixel-cube-frames-${snapshotCount}.png" class="btn btn-sm btn-outline-primary">Download</a>
-                                    <span class="text-muted">Frames: ${recordingFrames.length}</span>
-                                </div>
-                                <small class="mt-1 d-block">Frame sequence (7 seconds)</small>
-                            </div>
-                        </div>
-                    `;
+                    // Create container div for card
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
                     
-                    // Add to snapshots container
-                    debugLog("Adding to snapshots container");
+                    // Create card body for animation
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+
+                    // Create a container for the animation
+                    const animContainer = document.createElement('div');
+                    animContainer.className = 'animation-container';
+                    animContainer.style.position = 'relative';
+                    animContainer.style.width = `${frameSize}px`;
+                    animContainer.style.height = `${frameSize}px`;
+                    animContainer.style.overflow = 'hidden';
+                    animContainer.style.backgroundColor = '#000';
+                    animContainer.style.margin = '0 auto'; // Center it horizontally
+
+                    // Create image element to animate
+                    const animImage = document.createElement('img');
+                    animImage.style.width = '100%';
+                    animImage.style.height = '100%';
+                    animImage.src = frameDataUrls[0]; // Set first frame as initial image
+                    animContainer.appendChild(animImage);
+
+                    // Add it to cardBody before the controls
+                    cardBody.appendChild(animContainer);
+                    cardBody.appendChild(controlsDiv);
+
+                    // Animation state and functions
+                    let isPlaying = false;
+                    let currentFrame = 0;
+                    let animationInterval;
+
+                    // Animation function
+                    function updateAnimation() {
+                        currentFrame = (currentFrame + 1) % frameDataUrls.length;
+                        animImage.src = frameDataUrls[currentFrame];
+                    }
+
+                    // Play/pause function
+                    function togglePlayPause() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            playPauseBtn.textContent = 'Play';
+                        } else {
+                            animationInterval = setInterval(updateAnimation, 200); // 5fps
+                            playPauseBtn.textContent = 'Pause';
+                        }
+                        isPlaying = !isPlaying;
+                    }
+
+                    // Reset function
+                    function resetAnimation() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            isPlaying = false;
+                            playPauseBtn.textContent = 'Play';
+                        }
+                        currentFrame = 0;
+                        animImage.src = frameDataUrls[0];
+                    }
+
+                    // Attach event handlers
+                    playPauseBtn.addEventListener('click', togglePlayPause);
+                    resetBtn.addEventListener('click', resetAnimation);
+
+                    // Assemble elements
+                    cardDiv.appendChild(cardBody);
+                    cardDiv.appendChild(cardFooter);
+                    videoEl.appendChild(cardDiv);
+                    
+                    // Add to gallery
+                    debugLog("Adding web animation to snapshots container");
                     snapshotsDiv.prepend(videoEl);
                     snapshotsContainer.style.display = 'block';
                     
-                    // Optional: Add a note about GIF limitations
-                    debugLog("Note: Animated GIF creation is limited in browsers due to security and performance constraints", true);
-                    
                 } catch (error) {
                     debugLog("Error processing frames: " + error.message, true);
-                    alert("Error creating video: " + error.message);
+                    alert("Error creating animation: " + error.message);
                 } finally {
                     // Always clean up and reset state
-                    clearInterval(processingInterval);
                     isRecording = false;
                     recordingFrames = [];
-                    recordVideoButton.textContent = "Capture Frames";
+                    recordVideoButton.textContent = "Capture Video"; // Changed from "Capture Frames"
                     recordVideoButton.disabled = false;
-                    recordVideoButton.style.width = ''; // Reset width
                 }
             }
 
@@ -990,18 +1257,11 @@
                 }
             };
 
-            // Fetch the latest commit information from GitHub API
-            // Replace 'your-username/your-repo' with your actual GitHub repo
-            fetch('https://api.github.com/repos/your-username/your-repo/commits/main')
-                .then(response => response.json())
-                .then(data => {
-                    const commitHash = data.sha.substring(0, 7);  // Short hash
-                    const commitDate = new Date(data.commit.author.date).toLocaleDateString();
-                    document.getElementById('versionInfo').textContent = `v1.1.0-${commitHash} (${commitDate})`;
-                })
-                .catch(err => {
-                    console.error('Failed to fetch version info:', err);
-                });
+            // Update the version tag code to include a fixed version number
+            const buildDate = new Date().toLocaleDateString();
+            const versionNumber = "v0.3b"; // Incrementing version number
+            document.getElementById('versionInfo').textContent = `${versionNumber} (${buildDate})`;
+            debugLog(`Version info set: ${versionNumber} built on ${buildDate}`);
         });
     </script>
 </body>
