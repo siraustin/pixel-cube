@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pixelated Vision Cube Simulator</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <!-- GIF.js for video recording -->
-    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
-    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
     <style>
         .logo {
             width: 100px;
@@ -69,7 +67,7 @@
                             <button id="startButton" class="btn btn-primary">Turn Camera On</button>
                         </div>
 
-                        <video id="video" style="display: none;" autoplay playsinline></video>
+                        <video id="video" style="display: none;" autoplay playsinline crossorigin="anonymous"></video>
                         <canvas id="canvas" class="w-100"></canvas>
 
                         <div id="controls" class="controls mt-4" style="display: none;">
@@ -83,20 +81,20 @@
                                             Take Snapshot
                                         </button>
                                         <button id="recordVideo" class="btn btn-danger">
-                                            Record 3s Video
+                                            Capture Frames
                                         </button>
                                     </div>
                                 </div>
                                 <div class="col-12">
                                     <label for="pixelation" class="form-label">
-                                        Pixelation Level: <span id="pixelValue">20</span>
+                                        Pixelation Level: <span id="pixelValue">16</span>
                                     </label>
                                     <input type="range" 
                                            class="form-range" 
                                            id="pixelation" 
                                            min="5" 
                                            max="50" 
-                                           value="20">
+                                           value="16">
                                 </div>
                             </div>
                         </div>
@@ -120,9 +118,74 @@
             </div>
         </div>
     </div>
+    
+    <!-- Debug logs -->
+    <div class="container mt-4">
+        <div class="card bg-dark">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">Debug Logs</h6>
+                    <small class="text-muted" id="versionInfo">v1.0.0</small>
+                </div>
+                <div>
+                    <!-- <button id="testLogBtn" class="btn btn-sm btn-primary me-2">Test Log</button> -->
+                    <button id="clearLogs" class="btn btn-sm btn-secondary">Clear</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="debugLogs" class="text-light" style="max-height: 200px; overflow-y: auto; font-size: 12px; white-space: pre-wrap;"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Simplified debug logging
+            const debugLogs = document.getElementById('debugLogs');
+            const clearLogsBtn = document.getElementById('clearLogs');
+            
+            function debugLog(message, isError = false) {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = isError ? 'text-danger' : 'text-info';
+                entry.textContent = `[${timestamp}] ${message}`;
+                
+                // Make sure the debugLogs element exists
+                if (debugLogs) {
+                    debugLogs.appendChild(entry);
+                    debugLogs.scrollTop = debugLogs.scrollHeight;
+                    
+                    // Make sure the parent card is visible
+                    const debugCard = debugLogs.closest('.card');
+                    if (debugCard) {
+                        debugCard.style.display = 'block';
+                    }
+                }
+                
+                // Always log to console as backup
+                if (isError) {
+                    console.error(message);
+                } else {
+                    console.log(message);
+                }
+            }
+            
+            // Test logger button
+            // testLogBtn.addEventListener('click', () => {
+            //     debugLog("Logger test successful!");
+            //     debugLog("If you see this message, logging is working properly.");
+            //     alert("Test log message added. Check the Debug Logs section below.");
+            // });
+            
+            // Clear logs button
+            clearLogsBtn.addEventListener('click', () => {
+                debugLogs.innerHTML = '';
+                debugLog('Logs cleared');
+            });
+            
+            // Initial log entry
+            debugLog('Debug panel initialized');
+            
             // Draw initial canvas message
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
@@ -164,7 +227,18 @@
                 pixelValue.textContent = e.target.value;
             });
 
-            // Switch camera function, initially serves as "Turn Camera On"
+            // Add a function to handle camera mirroring based on which camera is active
+            function updateCameraMirroring() {
+                // Apply mirror effect for front camera only
+                if (currentFacingMode === 'user') {
+                    canvas.style.transform = 'scaleX(-1)'; // Mirror horizontally
+                } else {
+                    canvas.style.transform = 'scaleX(1)'; // Normal display
+                }
+                debugLog(`Camera mirroring ${currentFacingMode === 'user' ? 'enabled' : 'disabled'} for ${currentFacingMode} camera`);
+            }
+
+            // Update the switchCamera function to handle mirroring
             async function switchCamera() {
                 if (currentStream) {
                     // If we already have a stream, switch cameras
@@ -177,17 +251,23 @@
                         await initWebcam();
                         // Update button text to indicate current camera
                         switchCameraButton.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                        
+                        // Update mirroring based on current camera
+                        updateCameraMirroring();
                     } catch (err) {
                         console.error('Failed to switch camera:', err);
                         errorMessage.textContent = 'Failed to switch camera. Please try again.';
                         errorMessage.style.display = 'block';
                     }
                 } else {
-                    // First time: just turn the camera on (using environment/back camera by default)
+                    // First time: just turn the camera on
                     try {
                         await initWebcam();
                         // Update button text to indicate switch option now
                         switchCameraButton.textContent = `Switch to Back Camera`;
+                        
+                        // Set initial mirroring
+                        updateCameraMirroring();
                     } catch (err) {
                         console.error('Failed to initialize camera:', err);
                         errorMessage.textContent = 'Failed to turn on camera. Please ensure you have granted camera permissions.';
@@ -449,45 +529,58 @@
                 }
             }
             
-            // Record video function
+            // Record video function - simpler approach
             function startRecording() {
                 if (isRecording) return;
                 if (video.readyState !== video.HAVE_ENOUGH_DATA) {
-                    console.log("Cannot record, video not ready");
+                    debugLog("Cannot record, video not ready", true);
                     return;
                 }
                 
+                debugLog("Starting video recording...");
                 isRecording = true;
                 recordingFrames = [];
                 recordVideoButton.textContent = "Recording...";
                 recordVideoButton.disabled = true;
                 
-                // Record for 3 seconds (at 5 frames per second = 15 frames)
-                // Reduced from 10fps to 5fps for better performance
-                let framesLeft = 15;
+                // Record for 7 seconds (at 5 frames per second = 35 frames)
+                let framesLeft = 35;
+                let totalFrames = framesLeft;
                 
-                // Capture a frame 
+                debugLog(`Recording ${framesLeft} frames (7 seconds) at ${canvas.width}x${canvas.height}`);
+                
+                // Capture a frame with secure method
                 function captureFrame() {
                     if (framesLeft <= 0 || !isRecording) {
+                        debugLog(`Captured all ${totalFrames} frames`);
                         finishRecording();
                         return;
                     }
                     
-                    // Create a new frame canvas
-                    const frameCanvas = document.createElement('canvas');
-                    frameCanvas.width = canvas.width;
-                    frameCanvas.height = canvas.height;
-                    const frameCtx = frameCanvas.getContext('2d');
-                    
-                    // Copy the current canvas content to the frame
-                    frameCtx.drawImage(canvas, 0, 0);
-                    
-                    // Store the frame
-                    recordingFrames.push(frameCanvas);
+                    try {
+                        // Create a new frame canvas
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = canvas.width;
+                        frameCanvas.height = canvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        // IMPORTANT: Draw a solid color first to avoid security issues
+                        frameCtx.fillStyle = "#000000";
+                        frameCtx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+                        
+                        // Copy the current canvas content to the frame
+                        frameCtx.drawImage(canvas, 0, 0);
+                        
+                        // Store the frame
+                        recordingFrames.push(frameCanvas);
+                        debugLog(`Captured frame ${totalFrames-framesLeft+1}/${totalFrames}`);
+                    } catch (e) {
+                        debugLog(`Error capturing frame: ${e.message}`, true);
+                    }
                     
                     // Update button to show progress
                     framesLeft--;
-                    const progress = Math.round(((15-framesLeft)/15) * 100);
+                    const progress = Math.round(((totalFrames-framesLeft)/totalFrames) * 100);
                     recordVideoButton.textContent = `Recording ${progress}%`;
                     
                     // Capture the next frame in 200ms (5fps)
@@ -498,102 +591,112 @@
                 captureFrame();
             }
             
-            // Finish recording and generate the GIF
+            // Update the finishRecording function to include a timeout to prevent hanging
             function finishRecording() {
                 if (!isRecording) return;
                 
+                let processingDots = 0;
+                
+                // Calculate the width needed for the longest possible text
                 recordVideoButton.textContent = "Processing...";
+                const neededWidth = recordVideoButton.offsetWidth;
                 
-                // Create a GIF from the captured frames
-                const gif = new GIF({
-                    workers: 2,
-                    quality: 10,
-                    width: Math.min(320, canvas.width),  // Reduce size for faster processing
-                    height: Math.min(320, canvas.height),
-                    workerScript: 'https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js'
-                });
+                // Set fixed width to accommodate the maximum text length
+                recordVideoButton.style.width = `${neededWidth + 10}px`; // Add 10px padding
                 
-                console.log("Creating GIF with", recordingFrames.length, "frames");
+                // Start the processing animation with fixed-width dots
+                const processingInterval = setInterval(() => {
+                    processingDots = (processingDots + 1) % 4;
+                    const dots = '.'.repeat(processingDots).padEnd(3);
+                    recordVideoButton.textContent = `Processing${dots}`;
+                }, 500);
                 
-                // Add each frame to the GIF
-                recordingFrames.forEach((frameCanvas, index) => {
-                    console.log(`Adding frame ${index+1}/${recordingFrames.length} to GIF`);
-                    gif.addFrame(frameCanvas, {delay: 200, copy: true}); // 200ms delay between frames (5fps)
-                });
-                
-                // When the GIF is finished rendering
-                gif.on('finished', blob => {
-                    console.log("GIF rendering finished! Blob size:", blob.size, "bytes");
-                    
-                    try {
-                        // Create snapshot element for the video
-                        const videoEl = document.createElement('div');
-                        videoEl.className = 'col-6 col-md-4 col-lg-3';
-                        snapshotCount++;
-                        
-                        // Create URL for the GIF blob
-                        const videoUrl = URL.createObjectURL(blob);
-                        console.log("Created URL for video:", videoUrl);
-                        
-                        // Create video card
-                        videoEl.innerHTML = `
-                            <div class="card">
-                                <img src="${videoUrl}" class="card-img-top" alt="Video ${snapshotCount}">
-                                <div class="card-footer text-center">
-                                    <a href="${videoUrl}" download="pixel-cube-video-${snapshotCount}.gif" class="btn btn-sm btn-outline-primary">Download</a>
-                                    <small class="text-muted ms-2">Video ${snapshotCount}</small>
-                                </div>
-                            </div>
-                        `;
-                        
-                        // Add to snapshots container
-                        console.log("Adding video to snapshots container");
-                        snapshotsDiv.prepend(videoEl);
-                        
-                        // Ensure snapshots container is visible
-                        console.log("Making snapshots container visible");
-                        snapshotsContainer.style.display = 'block';
-                        
-                        // Reset recording state
-                        isRecording = false;
-                        recordingFrames = [];
-                        recordVideoButton.textContent = "Record 3s Video";
-                        recordVideoButton.disabled = false;
-                    } catch (err) {
-                        console.error("Error handling finished GIF:", err);
-                        recordVideoButton.textContent = "Record 3s Video";
-                        recordVideoButton.disabled = false;
-                        isRecording = false;
-                    }
-                });
-                
-                // Add progress handling
-                gif.on('progress', p => {
-                    const percent = Math.round(p * 100);
-                    recordVideoButton.textContent = `Processing ${percent}%`;
-                    console.log(`GIF processing: ${percent}%`);
-                });
-                
-                // Add error handling
-                gif.on('error', err => {
-                    console.error('GIF creation error:', err);
-                    recordVideoButton.textContent = "Error!";
-                    setTimeout(() => {
-                        recordVideoButton.textContent = "Record 3s Video";
-                        recordVideoButton.disabled = false;
-                        isRecording = false;
-                    }, 2000);
-                });
+                recordVideoButton.disabled = true;
+                debugLog("Processing video frames...");
                 
                 try {
-                    // Start rendering the GIF
-                    console.log("Starting GIF rendering...");
-                    gif.render();
-                } catch (err) {
-                    console.error("Error rendering GIF:", err);
-                    recordVideoButton.textContent = "Record 3s Video";
-                    recordVideoButton.disabled = false;
+                    // Create a static image grid (more reliable)
+                    debugLog("Creating image grid from " + recordingFrames.length + " frames");
+                    
+                    if (!recordingFrames || recordingFrames.length === 0) {
+                        clearInterval(processingInterval);
+                        throw new Error("No frames were captured");
+                    }
+                    
+                    // Create a canvas for the static image
+                    const staticCanvas = document.createElement('canvas');
+                    staticCanvas.width = 640;
+                    staticCanvas.height = 480;
+                    const ctx = staticCanvas.getContext('2d');
+                    
+                    // Fill with black background
+                    ctx.fillStyle = "#000";
+                    ctx.fillRect(0, 0, staticCanvas.width, staticCanvas.height);
+                    
+                    // Calculate grid layout
+                    const gridSize = Math.ceil(Math.sqrt(recordingFrames.length));
+                    const cellWidth = Math.floor(staticCanvas.width / gridSize);
+                    const cellHeight = Math.floor(staticCanvas.height / gridSize);
+                    
+                    // Draw frames in a grid
+                    recordingFrames.forEach((frame, i) => {
+                        const row = Math.floor(i / gridSize);
+                        const col = i % gridSize;
+                        const x = col * cellWidth;
+                        const y = row * cellHeight;
+                        
+                        // Draw the frame
+                        ctx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
+                        
+                        // Draw frame number
+                        ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                        ctx.font = "14px Arial";
+                        ctx.fillText((i+1).toString(), x + 5, y + 20);
+                        
+                        debugLog(`Processed frame ${i+1}/${recordingFrames.length}`);
+                    });
+                    
+                    // Convert to data URL
+                    const imageUrl = staticCanvas.toDataURL('image/png');
+                    debugLog("Successfully created grid image");
+                    
+                    // Create snapshot element
+                    const videoEl = document.createElement('div');
+                    videoEl.className = 'col-12 col-md-6';
+                    snapshotCount++;
+                    
+                    videoEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageUrl}" class="card-img-top" alt="Frame Grid ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="${imageUrl}" download="pixel-cube-frames-${snapshotCount}.png" class="btn btn-sm btn-outline-primary">Download</a>
+                                    <span class="text-muted">Frames: ${recordingFrames.length}</span>
+                                </div>
+                                <small class="mt-1 d-block">Frame sequence (7 seconds)</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add to snapshots container
+                    debugLog("Adding to snapshots container");
+                    snapshotsDiv.prepend(videoEl);
+                    snapshotsContainer.style.display = 'block';
+                    
+                    // Optional: Add a note about GIF limitations
+                    debugLog("Note: Animated GIF creation is limited in browsers due to security and performance constraints", true);
+                    
+                } catch (error) {
+                    debugLog("Error processing frames: " + error.message, true);
+                    alert("Error creating video: " + error.message);
+                } finally {
+                    // Always clean up and reset state
+                    clearInterval(processingInterval);
                     isRecording = false;
+                    recordingFrames = [];
+                    recordVideoButton.textContent = "Capture Frames";
+                    recordVideoButton.disabled = false;
+                    recordVideoButton.style.width = ''; // Reset width
                 }
             }
 
@@ -623,6 +726,269 @@
             switchCameraButton.addEventListener('click', switchCamera);
             takeSnapshotButton.addEventListener('click', takeSnapshot);
             recordVideoButton.addEventListener('click', startRecording);
+
+            // Add this code inside the DOMContentLoaded event listener
+            // to override console.log for debug panel integration
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+
+            console.log = function() {
+                // Call the original console.log without triggering debugLog
+                originalConsoleLog.apply(console, arguments);
+                
+                // Only log to debug panel if this isn't coming from debugLog itself
+                const stack = new Error().stack || '';
+                if (!stack.includes('debugLog')) {
+                    const message = Array.from(arguments).join(' ');
+                    debugLog(message);
+                }
+            };
+
+            console.error = function() {
+                // Call the original console.error
+                originalConsoleError.apply(console, arguments);
+                
+                // Only log to debug panel if this isn't coming from debugLog itself
+                const stack = new Error().stack || '';
+                if (!stack.includes('debugLog')) {
+                    const message = Array.from(arguments).join(' ');
+                    debugLog(message, true);
+                }
+            };
+
+            debugLog("Console logging overridden for debug panel integration");
+
+            // Add the SimpleGif object implementation inside the DOMContentLoaded event listener
+            // Add this right after the debugLog function definition
+
+            // Implement the SimpleGif utility
+            window.SimpleGif = {
+                createFromFrames: function(frames, options = {}) {
+                    return new Promise((resolve, reject) => {
+                        // Define variables at the top level
+                        let gridPreviewUrl = null;
+                        let gridWidth = options.width || 640;
+                        let gridHeight = options.height || 480;
+                        let frameCount = frames ? frames.length : 0;
+                        let gifError = null;
+                        
+                        try {
+                            if (!frames || frames.length === 0) {
+                                throw new Error("No frames provided for GIF creation");
+                            }
+                            
+                            debugLog("Creating animated GIF from " + frames.length + " frames");
+                            
+                            // Create static preview first
+                            let gridCanvas = document.createElement('canvas');
+                            gridCanvas.width = gridWidth;
+                            gridCanvas.height = gridHeight;
+                            let gridCtx = gridCanvas.getContext('2d');
+                            
+                            // Fill with black background
+                            gridCtx.fillStyle = "#000";
+                            gridCtx.fillRect(0, 0, gridWidth, gridHeight);
+                            
+                            // Draw frames in a grid
+                            const gridSize = Math.ceil(Math.sqrt(frames.length));
+                            const cellWidth = Math.floor(gridWidth / gridSize);
+                            const cellHeight = Math.floor(gridHeight / gridSize);
+                            
+                            // Draw each frame in the grid
+                            frames.forEach((frame, i) => {
+                                try {
+                                    const row = Math.floor(i / gridSize);
+                                    const col = i % gridSize;
+                                    const x = col * cellWidth;
+                                    const y = row * cellHeight;
+                                    
+                                    // Draw the frame
+                                    gridCtx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
+                                    
+                                    // Draw frame number
+                                    gridCtx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                                    gridCtx.font = "14px Arial";
+                                    gridCtx.fillText((i+1).toString(), x + 5, y + 20);
+                                } catch (frameError) {
+                                    debugLog(`Error drawing frame ${i} in grid: ${frameError.message}`, true);
+                                }
+                            });
+                            
+                            // Get preview URL
+                            try {
+                                gridPreviewUrl = gridCanvas.toDataURL('image/png');
+                                debugLog("Created grid preview successfully");
+                            } catch (previewError) {
+                                debugLog("Error creating grid preview: " + previewError.message, true);
+                            }
+                            
+                            // Now try to create an animated GIF with a more direct approach
+                            debugLog("Starting direct GIF creation");
+                            
+                            // Prepare frames for GIF
+                            const gifFramesPromises = frames.map((frame, index) => {
+                                return new Promise((resolveFrame) => {
+                                    try {
+                                        // Create a new canvas for this frame
+                                        const frameCanvas = document.createElement('canvas');
+                                        const frameSize = 200; // Reduced size for better performance
+                                        frameCanvas.width = frameSize;
+                                        frameCanvas.height = frameSize;
+                                        const frameCtx = frameCanvas.getContext('2d');
+                                        
+                                        // Draw black background
+                                        frameCtx.fillStyle = '#000000';
+                                        frameCtx.fillRect(0, 0, frameSize, frameSize);
+                                        
+                                        // Draw the frame content, scaled down
+                                        frameCtx.drawImage(frame, 0, 0, frame.width, frame.height, 
+                                                          0, 0, frameSize, frameSize);
+                                        
+                                        // Convert to data URL
+                                        frameCanvas.toBlob((blob) => {
+                                            resolveFrame({
+                                                blob: blob,
+                                                url: URL.createObjectURL(blob),
+                                                index: index
+                                            });
+                                        }, 'image/png');
+                                    } catch (err) {
+                                        debugLog(`Error preparing frame ${index}: ${err.message}`, true);
+                                        // Return a placeholder if frame preparation fails
+                                        resolveFrame({
+                                            error: err.message,
+                                            index: index
+                                        });
+                                    }
+                                });
+                            });
+                            
+                            // Wait for all frames to be prepared
+                            Promise.all(gifFramesPromises)
+                            .then(preparedFrames => {
+                                debugLog(`All ${preparedFrames.length} frames prepared for GIF`);
+                                
+                                // Try creating a GIF with gif.js
+                                try {
+                                    if (typeof GIF === 'undefined') {
+                                        throw new Error("GIF.js library not available");
+                                    }
+                                    
+                                    // Create a new GIF
+                                    const frameSize = 200; // Match the size used in frame preparation
+                                    const gif = new GIF({
+                                        workers: 2,
+                                        quality: 10,
+                                        width: frameSize,
+                                        height: frameSize,
+                                        workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+                                    });
+                                    
+                                    // Add each prepared frame
+                                    preparedFrames.forEach((frameData, index) => {
+                                        if (!frameData.error && frameData.blob) {
+                                            const img = new Image();
+                                            img.src = frameData.url;
+                                            
+                                            // Need to wait for the image to load
+                                            img.onload = function() {
+                                                gif.addFrame(img, {delay: 200}); // 200ms = 5fps
+                                                
+                                                // If this is the last frame, render the GIF
+                                                if (index === preparedFrames.length - 1) {
+                                                    debugLog("All frames added to GIF, rendering...");
+                                                    gif.render();
+                                                }
+                                            };
+                                            
+                                            img.onerror = function() {
+                                                debugLog(`Error loading image for frame ${index}`, true);
+                                                // If this is the last frame, render anyway
+                                                if (index === preparedFrames.length - 1) {
+                                                    gif.render();
+                                                }
+                                            };
+                                        }
+                                    });
+                                    
+                                    // Handle GIF completion
+                                    gif.on('finished', function(blob) {
+                                        debugLog(`GIF created successfully! Size: ${Math.round(blob.size/1024)}KB`);
+                                        
+                                        // Create a URL for the GIF
+                                        const gifUrl = URL.createObjectURL(blob);
+                                        
+                                        // Success! Return the GIF URL
+                                        resolve({
+                                            url: gifUrl,
+                                            blob: blob,
+                                            width: frameSize,
+                                            height: frameSize,
+                                            frameCount: frames.length,
+                                            isAnimated: true
+                                        });
+                                    });
+                                    
+                                    // Handle GIF progress
+                                    gif.on('progress', function(p) {
+                                        debugLog(`GIF encoding: ${Math.round(p*100)}%`);
+                                    });
+                                    
+                                } catch (gifErr) {
+                                    gifError = gifErr;
+                                    throw gifErr;
+                                }
+                            })
+                            .catch(err => {
+                                debugLog("Error in GIF creation: " + err.message, true);
+                                
+                                // Fall back to the static preview
+                                resolve({
+                                    url: gridPreviewUrl || "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                                    width: gridWidth,
+                                    height: gridHeight,
+                                    frameCount: frameCount,
+                                    isAnimated: false,
+                                    error: err.message
+                                });
+                            });
+                            
+                        } catch (error) {
+                            debugLog("Critical error in GIF creation: " + error.message, true);
+                            
+                            // Create a fallback preview if needed
+                            if (!gridPreviewUrl) {
+                                try {
+                                    const fallbackCanvas = document.createElement('canvas');
+                                    fallbackCanvas.width = gridWidth;
+                                    fallbackCanvas.height = gridHeight;
+                                    const fallbackCtx = fallbackCanvas.getContext('2d');
+                                    fallbackCtx.fillStyle = "#333";
+                                    fallbackCtx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+                                    fallbackCtx.fillStyle = "#FFF";
+                                    fallbackCtx.font = "20px Arial";
+                                    fallbackCtx.fillText("GIF Creation Failed", gridWidth/2 - 100, gridHeight/2);
+                                    fallbackCtx.font = "16px Arial";
+                                    fallbackCtx.fillText(error.message, gridWidth/2 - 150, gridHeight/2 + 30);
+                                    gridPreviewUrl = fallbackCanvas.toDataURL('image/png');
+                                } catch (e) {
+                                    gridPreviewUrl = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+                                }
+                            }
+                            
+                            // Fall back to the static preview
+                            resolve({
+                                url: gridPreviewUrl,
+                                width: gridWidth,
+                                height: gridHeight,
+                                frameCount: frameCount,
+                                isAnimated: false,
+                                error: error.message
+                            });
+                        }
+                    });
+                }
+            };
         });
     </script>
 </body>
