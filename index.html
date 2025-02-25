@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixelated Vision Cube Simulator</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <!-- GIF.js for video recording -->
+    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.js"></script>
+    <script src="https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js"></script>
+    <style>
+        .logo {
+            width: 100px;
+            height: auto;
+        }
+
+        #canvas {
+            background-color: var(--bs-dark);
+            border-radius: 8px;
+            max-height: 70vh;
+        }
+
+        .controls {
+            background-color: var(--bs-dark);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            background: var(--bs-primary);
+        }
+
+        .form-range::-moz-range-thumb {
+            background: var(--bs-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-12 text-center mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" class="logo mb-3">
+                    <style>
+                        .cube { fill: #007bff; }
+                        .pixels { fill: #ffffff; opacity: 0.3; }
+                    </style>
+                    <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
+                    <g class="pixels">
+                        <rect x="30" y="30" width="10" height="10"/>
+                        <rect x="45" y="30" width="10" height="10"/>
+                        <rect x="60" y="30" width="10" height="10"/>
+                        <rect x="30" y="45" width="10" height="10"/>
+                        <rect x="45" y="45" width="10" height="10"/>
+                        <rect x="60" y="45" width="10" height="10"/>
+                        <rect x="30" y="60" width="10" height="10"/>
+                        <rect x="45" y="60" width="10" height="10"/>
+                        <rect x="60" y="60" width="10" height="10"/>
+                    </g>
+                </svg>
+                <h1 class="display-5">Pixelated Vision Cube Simulator</h1>
+            </div>
+
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="card bg-dark">
+                    <div class="card-body">
+                        <!-- Initial permission request UI -->
+                        <div id="startPrompt" class="text-center py-4">
+                            <p class="mb-3">This simulator needs access to your camera to demonstrate the pixelation effect.</p>
+                            <button id="startButton" class="btn btn-primary">Turn Camera On</button>
+                        </div>
+
+                        <video id="video" style="display: none;" autoplay playsinline></video>
+                        <canvas id="canvas" class="w-100"></canvas>
+
+                        <div id="controls" class="controls mt-4" style="display: none;">
+                            <div class="row align-items-center">
+                                <div class="col-12 mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <button id="switchCamera" class="btn btn-secondary">
+                                            Turn Camera On
+                                        </button>
+                                        <button id="takeSnapshot" class="btn btn-primary">
+                                            Take Snapshot
+                                        </button>
+                                        <button id="recordVideo" class="btn btn-danger">
+                                            Record 3s Video
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="pixelation" class="form-label">
+                                        Pixelation Level: <span id="pixelValue">20</span>
+                                    </label>
+                                    <input type="range" 
+                                           class="form-range" 
+                                           id="pixelation" 
+                                           min="5" 
+                                           max="50" 
+                                           value="20">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;">
+                    Unable to access camera. Please ensure you have granted camera permissions.
+                </div>
+
+                <div class="card bg-dark mt-3" id="snapshotsContainer">
+                    <div class="card-header">
+                        <h5 class="mb-0">Snapshots & Videos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="snapshots" class="row g-3">
+                            <!-- Snapshots will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Draw initial canvas message
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 640;
+            canvas.height = 640;
+            ctx.fillStyle = "#444";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#f00";
+            ctx.font = "24px Arial";
+            ctx.fillText("Click 'Turn Camera On' to start", 180, canvas.height/2);
+            
+            const video = document.getElementById('video');
+            const pixelationSlider = document.getElementById('pixelation');
+            const pixelValue = document.getElementById('pixelValue');
+            const errorMessage = document.getElementById('errorMessage');
+            const startButton = document.getElementById('startButton');
+            const controls = document.getElementById('controls');
+            const startPrompt = document.getElementById('startPrompt');
+            const switchCameraButton = document.getElementById('switchCamera');
+
+            const takeSnapshotButton = document.getElementById('takeSnapshot');
+            const recordVideoButton = document.getElementById('recordVideo');
+            const snapshotsContainer = document.getElementById('snapshotsContainer');
+            const snapshotsDiv = document.getElementById('snapshots');
+            
+            let isRecording = false;
+            let recordingFrames = [];
+            
+            let currentStream = null;
+            let currentFacingMode = 'user'; // Start with front camera
+            let snapshotCount = 0;
+
+            // Set initial canvas size to 1:1 aspect ratio
+            canvas.width = 640;
+            canvas.height = 640;
+
+            // Update pixelation value display
+            pixelationSlider.addEventListener('input', (e) => {
+                pixelValue.textContent = e.target.value;
+            });
+
+            // Switch camera function, initially serves as "Turn Camera On"
+            async function switchCamera() {
+                if (currentStream) {
+                    // If we already have a stream, switch cameras
+                    currentStream.getTracks().forEach(track => track.stop());
+                    
+                    // Toggle facing mode
+                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+                    
+                    try {
+                        await initWebcam();
+                        // Update button text to indicate current camera
+                        switchCameraButton.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                    } catch (err) {
+                        console.error('Failed to switch camera:', err);
+                        errorMessage.textContent = 'Failed to switch camera. Please try again.';
+                        errorMessage.style.display = 'block';
+                    }
+                } else {
+                    // First time: just turn the camera on (using environment/back camera by default)
+                    try {
+                        await initWebcam();
+                        // Update button text to indicate switch option now
+                        switchCameraButton.textContent = `Switch to Back Camera`;
+                    } catch (err) {
+                        console.error('Failed to initialize camera:', err);
+                        errorMessage.textContent = 'Failed to turn on camera. Please ensure you have granted camera permissions.';
+                        errorMessage.style.display = 'block';
+                    }
+                }
+            }
+
+            // Initialize webcam with better error handling
+            async function initWebcam() {
+                try {
+                    // First check if getUserMedia is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('WebRTC API not supported in this browser');
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 640 },
+                            height: { ideal: 640 }, // Request square aspect ratio
+                            aspectRatio: { ideal: 1 } // Force 1:1 aspect ratio
+                        } 
+                    });
+
+                    currentStream = stream;
+                    video.srcObject = stream;
+
+                    // Always show the switch camera button, we're using it as our main control
+                    switchCameraButton.style.display = 'block';
+
+                    // Explicitly start playing the video
+                    try {
+                        await video.play();
+                        console.log('Video playback started successfully');
+                        
+                        // Draw a message to indicate success
+                        ctx.fillStyle = "#007700";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = "#fff";
+                        ctx.font = "24px Arial";
+                        ctx.fillText("Camera started successfully!", 160, canvas.height/2);
+                        
+                        // Show the controls
+                        controls.style.display = 'block';
+                        startPrompt.style.display = 'none';
+                        errorMessage.style.display = 'none';
+                        
+                        // Force a frame update
+                        setTimeout(() => {
+                            console.log("Forcing pixelation update");
+                            if (video.readyState >= 2) {
+                                console.log("Video is ready with state: " + video.readyState);
+                                pixelate(canvas, parseInt(pixelationSlider.value));
+                            }
+                        }, 500);
+                    } catch (playError) {
+                        console.error('Error playing video:', playError);
+                        throw new Error(`Failed to play video: ${playError.message}`);
+                    }
+
+                    // Start the animation loop once video is ready
+                    video.addEventListener('loadedmetadata', () => {
+                        console.log('Video metadata loaded:', {
+                            width: video.videoWidth,
+                            height: video.videoHeight
+                        });
+                        // Set canvas size to match video
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        animate();
+                    });
+
+                    // Handle video errors
+                    video.addEventListener('error', (e) => {
+                        console.error('Video element error:', {
+                            error: e.error,
+                            currentTime: video.currentTime,
+                            readyState: video.readyState
+                        });
+                        errorMessage.textContent = 'Error playing video stream. Please refresh and try again.';
+                        errorMessage.style.display = 'block';
+                    });
+
+                } catch (err) {
+                    console.error('Webcam access error:', {
+                        name: err.name,
+                        message: err.message,
+                        stack: err.stack
+                    });
+
+                    let errorMsg = 'Unable to access camera. ';
+
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        errorMsg += 'Please ensure you have granted camera permissions and refresh the page.';
+                    } else if (err.name === 'NotFoundError') {
+                        errorMsg += 'No camera device found. Please connect a camera and refresh.';
+                    } else if (err.name === 'NotReadableError') {
+                        errorMsg += 'Camera is already in use by another application. Please close other apps using the camera.';
+                    } else if (err.name === 'SecurityError') {
+                        errorMsg += 'Camera access is blocked. Please ensure you are using HTTPS or localhost.';
+                    } else {
+                        errorMsg += `An unexpected error occurred: ${err.message}`;
+                    }
+
+                    errorMessage.textContent = errorMsg;
+                    errorMessage.style.display = 'block';
+                }
+            }
+
+            // Pixelate the video frame with guaranteed square pixels for all devices
+            function pixelate(sourceCanvas, pixelSize) {
+                const w = sourceCanvas.width;
+                const h = sourceCanvas.height;
+                
+                // Create a temporary canvas for the pixelation effect
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = w;
+                tempCanvas.height = h;
+                
+                // Draw the video frame
+                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                    tempCtx.drawImage(video, 0, 0, w, h);
+                } else {
+                    console.log("Video not ready yet: " + video.readyState);
+                    // Draw a message if video isn't ready
+                    ctx.fillStyle = "#444";
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.fillStyle = "#f00";
+                    ctx.font = "24px Arial";
+                    ctx.fillText("Waiting for camera...", 180, h/2);
+                    return; // Skip the rest of the pixelation
+                }
+                
+                // Determine the size of each square pixel based on the pixelation level
+                // This will be a fixed number of pixels on both dimensions
+                const totalPixels = Math.max(Math.floor(Math.min(w, h) / pixelSize), 1);
+                
+                // Calculate final size in pixels for each square
+                const pixelWidth = Math.floor(w / totalPixels);
+                const pixelHeight = Math.floor(h / totalPixels);
+                
+                // Calculate centering offsets if there's excess space
+                const xOffset = Math.floor((w - (pixelWidth * totalPixels)) / 2);
+                const yOffset = Math.floor((h - (pixelHeight * totalPixels)) / 2);
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, w, h);
+                
+                // Fill with black background (for any unused space)
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+                
+                // Disable image smoothing
+                ctx.imageSmoothingEnabled = false;
+                
+                // Debug indication
+                ctx.fillStyle = "#444";
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = "#f00";
+                ctx.font = "20px Arial";
+                ctx.fillText("Waiting for camera...", 20, h/2);
+                
+                // Create square pixels
+                for (let y = 0; y < totalPixels; y++) {
+                    for (let x = 0; x < totalPixels; x++) {
+                        // Calculate the position to sample from the source
+                        const sourceX = Math.floor(x * (w / totalPixels) + (w / totalPixels / 2));
+                        const sourceY = Math.floor(y * (h / totalPixels) + (h / totalPixels / 2));
+                        
+                        // Sample the color
+                        const data = tempCtx.getImageData(sourceX, sourceY, 1, 1).data;
+                        
+                        // Draw a square pixel
+                        // Force the width and height to be the same to ensure square pixels
+                        const size = Math.min(pixelWidth, pixelHeight);
+                        
+                        ctx.fillStyle = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3]/255})`;
+                        
+                        // Position the square with proper centering
+                        const pixelX = x * size + xOffset;
+                        const pixelY = y * size + yOffset;
+                        
+                        ctx.fillRect(pixelX, pixelY, size, size);
+                    }
+                }
+                
+                // Re-enable image smoothing
+                ctx.imageSmoothingEnabled = true;
+            }
+
+            // Animation loop
+            function animate() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Get current pixelation level
+                    const pixelSize = parseInt(pixelationSlider.value);
+
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Apply pixelation effect
+                    pixelate(canvas, pixelSize);
+                }
+
+                // Request next frame
+                requestAnimationFrame(animate);
+            }
+
+            // Handle window resize
+            function handleResize() {
+                const container = canvas.parentElement;
+                const aspectRatio = canvas.width / canvas.height;
+                const newWidth = container.clientWidth;
+                const newHeight = newWidth / aspectRatio;
+
+                canvas.style.width = `${newWidth}px`;
+                canvas.style.height = `${newHeight}px`;
+            }
+
+            // Take snapshot function
+            function takeSnapshot() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Create a new snapshot canvas
+                    const snapshotCanvas = document.createElement('canvas');
+                    snapshotCanvas.width = canvas.width;
+                    snapshotCanvas.height = canvas.height;
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    
+                    // Copy the current canvas content to the snapshot canvas
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert to image data URL
+                    const imageDataUrl = snapshotCanvas.toDataURL('image/png');
+                    
+                    // Create snapshot element
+                    const snapshotEl = document.createElement('div');
+                    snapshotEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create snapshot card
+                    snapshotEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageDataUrl}" class="card-img-top" alt="Snapshot ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <a href="${imageDataUrl}" download="pixel-cube-snapshot-${snapshotCount}.png" class="btn btn-sm btn-outline-primary">Download</a>
+                                <small class="text-muted ms-2">Snapshot ${snapshotCount}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add to snapshots container
+                    snapshotsDiv.prepend(snapshotEl);
+                    
+                    // Show snapshots container if it's the first snapshot
+                    if (snapshotCount === 1) {
+                        snapshotsContainer.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Record video function
+            function startRecording() {
+                if (isRecording) return;
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    console.log("Cannot record, video not ready");
+                    return;
+                }
+                
+                isRecording = true;
+                recordingFrames = [];
+                recordVideoButton.textContent = "Recording...";
+                recordVideoButton.disabled = true;
+                
+                // Record for 3 seconds (at 5 frames per second = 15 frames)
+                // Reduced from 10fps to 5fps for better performance
+                let framesLeft = 15;
+                
+                // Capture a frame 
+                function captureFrame() {
+                    if (framesLeft <= 0 || !isRecording) {
+                        finishRecording();
+                        return;
+                    }
+                    
+                    // Create a new frame canvas
+                    const frameCanvas = document.createElement('canvas');
+                    frameCanvas.width = canvas.width;
+                    frameCanvas.height = canvas.height;
+                    const frameCtx = frameCanvas.getContext('2d');
+                    
+                    // Copy the current canvas content to the frame
+                    frameCtx.drawImage(canvas, 0, 0);
+                    
+                    // Store the frame
+                    recordingFrames.push(frameCanvas);
+                    
+                    // Update button to show progress
+                    framesLeft--;
+                    const progress = Math.round(((15-framesLeft)/15) * 100);
+                    recordVideoButton.textContent = `Recording ${progress}%`;
+                    
+                    // Capture the next frame in 200ms (5fps)
+                    setTimeout(captureFrame, 200);
+                }
+                
+                // Start capturing frames
+                captureFrame();
+            }
+            
+            // Finish recording and generate the GIF
+            function finishRecording() {
+                if (!isRecording) return;
+                
+                recordVideoButton.textContent = "Processing...";
+                
+                // Create a GIF from the captured frames
+                const gif = new GIF({
+                    workers: 2,
+                    quality: 10,
+                    width: Math.min(320, canvas.width),  // Reduce size for faster processing
+                    height: Math.min(320, canvas.height),
+                    workerScript: 'https://unpkg.com/gif.js@0.2.0/dist/gif.worker.js'
+                });
+                
+                console.log("Creating GIF with", recordingFrames.length, "frames");
+                
+                // Add each frame to the GIF
+                recordingFrames.forEach((frameCanvas, index) => {
+                    console.log(`Adding frame ${index+1}/${recordingFrames.length} to GIF`);
+                    gif.addFrame(frameCanvas, {delay: 200, copy: true}); // 200ms delay between frames (5fps)
+                });
+                
+                // When the GIF is finished rendering
+                gif.on('finished', blob => {
+                    console.log("GIF rendering finished! Blob size:", blob.size, "bytes");
+                    
+                    try {
+                        // Create snapshot element for the video
+                        const videoEl = document.createElement('div');
+                        videoEl.className = 'col-6 col-md-4 col-lg-3';
+                        snapshotCount++;
+                        
+                        // Create URL for the GIF blob
+                        const videoUrl = URL.createObjectURL(blob);
+                        console.log("Created URL for video:", videoUrl);
+                        
+                        // Create video card
+                        videoEl.innerHTML = `
+                            <div class="card">
+                                <img src="${videoUrl}" class="card-img-top" alt="Video ${snapshotCount}">
+                                <div class="card-footer text-center">
+                                    <a href="${videoUrl}" download="pixel-cube-video-${snapshotCount}.gif" class="btn btn-sm btn-outline-primary">Download</a>
+                                    <small class="text-muted ms-2">Video ${snapshotCount}</small>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Add to snapshots container
+                        console.log("Adding video to snapshots container");
+                        snapshotsDiv.prepend(videoEl);
+                        
+                        // Ensure snapshots container is visible
+                        console.log("Making snapshots container visible");
+                        snapshotsContainer.style.display = 'block';
+                        
+                        // Reset recording state
+                        isRecording = false;
+                        recordingFrames = [];
+                        recordVideoButton.textContent = "Record 3s Video";
+                        recordVideoButton.disabled = false;
+                    } catch (err) {
+                        console.error("Error handling finished GIF:", err);
+                        recordVideoButton.textContent = "Record 3s Video";
+                        recordVideoButton.disabled = false;
+                        isRecording = false;
+                    }
+                });
+                
+                // Add progress handling
+                gif.on('progress', p => {
+                    const percent = Math.round(p * 100);
+                    recordVideoButton.textContent = `Processing ${percent}%`;
+                    console.log(`GIF processing: ${percent}%`);
+                });
+                
+                // Add error handling
+                gif.on('error', err => {
+                    console.error('GIF creation error:', err);
+                    recordVideoButton.textContent = "Error!";
+                    setTimeout(() => {
+                        recordVideoButton.textContent = "Record 3s Video";
+                        recordVideoButton.disabled = false;
+                        isRecording = false;
+                    }, 2000);
+                });
+                
+                try {
+                    // Start rendering the GIF
+                    console.log("Starting GIF rendering...");
+                    gif.render();
+                } catch (err) {
+                    console.error("Error rendering GIF:", err);
+                    recordVideoButton.textContent = "Record 3s Video";
+                    recordVideoButton.disabled = false;
+                    isRecording = false;
+                }
+            }
+
+            // Add event listeners
+            window.addEventListener('resize', handleResize);
+            
+            // Show controls immediately 
+            setTimeout(() => {
+                console.log('Showing controls...');
+                handleResize();
+                startPrompt.style.display = 'none'; // Hide the start prompt
+                controls.style.display = 'block'; // Show controls with camera button
+                
+                // Start animation loop immediately, so we can at least show a message
+                animate();
+            }, 500);
+            
+            // Keep the manual button for non-Mac or if auto-start fails
+            startButton.addEventListener('click', () => {
+                console.log('Starting webcam initialization...');
+                handleResize();
+                initWebcam().catch(err => {
+                    console.error('Failed to initialize webcam:', err);
+                });
+            });
+            
+            switchCameraButton.addEventListener('click', switchCamera);
+            takeSnapshotButton.addEventListener('click', takeSnapshot);
+            recordVideoButton.addEventListener('click', startRecording);
+        });
+    </script>
+</body>
+</html>
