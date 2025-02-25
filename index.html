@@ -543,41 +543,34 @@
 
             // Update the switchCamera function to handle mirroring
             async function switchCamera() {
+                currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+                debugLog(`Switching camera to ${currentFacingMode}`);
+
                 if (currentStream) {
-                    // If we already have a stream, switch cameras
                     currentStream.getTracks().forEach(track => track.stop());
-                    
-                    // Toggle facing mode
-                    currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
-                    
-                    try {
-                        await initWebcam();
-                        // Update button text to indicate current camera in both tabs
-                        switchCameraButton.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
-                        kaleidoscopeSwitchCamera.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
-                        
-                        // Update mirroring based on current camera
-                        updateCameraMirroring();
-                    } catch (err) {
-                        console.error('Failed to switch camera:', err);
-                        errorMessage.textContent = 'Failed to switch camera. Please try again.';
-                        errorMessage.style.display = 'block';
-                    }
-                } else {
-                    // First time: just turn the camera on
-                    try {
-                        await initWebcam();
-                        // Update button text to indicate switch option now in both tabs
-                        switchCameraButton.textContent = `Switch to Back Camera`;
-                        kaleidoscopeSwitchCamera.textContent = `Switch to Back Camera`;
-                        
-                        // Set initial mirroring
-                        updateCameraMirroring();
-                    } catch (err) {
-                        console.error('Failed to initialize camera:', err);
-                        errorMessage.textContent = 'Failed to turn on camera. Please ensure you have granted camera permissions.';
-                        errorMessage.style.display = 'block';
-                    }
+                }
+
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    });
+
+                    video.srcObject = currentStream;
+                    await video.play();
+
+                    // Update button text based on facing mode
+                    const switchCameraText = currentFacingMode === 'user' ? 'Switch to Rear Camera' : 'Switch to Front Camera';
+                    switchCameraButton.textContent = switchCameraText;
+                    kaleidoscopeSwitchCamera.textContent = switchCameraText;
+                    animalSwitchCamera.textContent = switchCameraText;
+
+                    // Update camera mirroring
+                    updateCameraMirroring();
+
+                    debugLog(`Camera switched to ${currentFacingMode}`);
+                } catch (err) {
+                    debugLog(`Error switching camera: ${err.message}`, true);
                 }
             }
 
