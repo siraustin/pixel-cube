@@ -3,14 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixelated Vision Cube Simulator</title>
+    <title>Vision Simulators</title>
     <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
     <style>
-        .logo {
-            width: 80px;
-            height: auto;
-            margin-right: 15px;
+        .tab-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: text-bottom;
         }
 
         #canvas {
@@ -35,25 +37,57 @@
             background: var(--bs-primary);
         }
         
-        .header-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
+        /* Tab navigation styles */
+        .nav-tabs {
+            border-bottom: 1px solid var(--bs-border-color);
+            margin-bottom: 1.5rem;
         }
         
-        .header-title {
-            font-size: 1.8rem;
-            margin: 0;
-            white-space: nowrap;
+        .nav-tabs .nav-link {
+            color: var(--bs-body-color);
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-bottom-color: var(--bs-primary-border-subtle);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            background-color: transparent;
+            border-bottom-color: var(--bs-primary);
+        }
+        
+        /* Tab content containers */
+        .tab-content {
+            padding: 1rem 0;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
         }
         
         @media (max-width: 576px) {
-            .header-title {
-                font-size: 1.4rem;
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
             }
-            .logo {
-                width: 60px;
+            
+            .tab-icon {
+                width: 20px;
+                height: 20px;
+                margin-right: 4px;
             }
         }
     </style>
@@ -61,68 +95,220 @@
 <body>
     <div class="container py-4">
         <div class="row justify-content-center">
-            <div class="col-12 text-center mb-2">
-                <div class="header-container">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="logo">
-                        <style>
-                            .cube { fill: #007bff; }
-                            .pixels { fill: #ffffff; opacity: 0.3; }
-                        </style>
-                        <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
-                        <g class="pixels">
-                            <rect x="30" y="30" width="10" height="10"/>
-                            <rect x="45" y="30" width="10" height="10"/>
-                            <rect x="60" y="30" width="10" height="10"/>
-                            <rect x="30" y="45" width="10" height="10"/>
-                            <rect x="45" y="45" width="10" height="10"/>
-                            <rect x="60" y="45" width="10" height="10"/>
-                            <rect x="30" y="60" width="10" height="10"/>
-                            <rect x="45" y="60" width="10" height="10"/>
-                            <rect x="60" y="60" width="10" height="10"/>
-                        </g>
-                    </svg>
-                    <h1 class="header-title">Pixelated Vision Cube Simulator</h1>
-                </div>
-            </div>
-
+            <!-- Tab Navigation -->
             <div class="col-12 col-md-10 col-lg-8">
-                <div class="card bg-dark">
-                    <div class="card-body">
-                        <!-- Initial permission request UI -->
-                        <div id="startPrompt" class="text-center py-4">
-                            <p class="mb-3">This simulator needs access to your camera to demonstrate the pixelation effect.</p>
-                            <button id="startButton" class="btn btn-primary">Turn Camera On</button>
-                        </div>
+                <ul class="nav nav-tabs" id="visionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pixel-cube-tab" data-bs-toggle="tab" data-bs-target="#pixel-cube" 
+                                type="button" role="tab" aria-controls="pixel-cube" aria-selected="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .cube { fill: #007bff; }
+                                    .pixels { fill: #ffffff; opacity: 0.3; }
+                                </style>
+                                <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
+                                <g class="pixels">
+                                    <rect x="30" y="30" width="10" height="10"/>
+                                    <rect x="45" y="30" width="10" height="10"/>
+                                    <rect x="60" y="30" width="10" height="10"/>
+                                    <rect x="30" y="45" width="10" height="10"/>
+                                    <rect x="45" y="45" width="10" height="10"/>
+                                    <rect x="60" y="45" width="10" height="10"/>
+                                    <rect x="30" y="60" width="10" height="10"/>
+                                    <rect x="45" y="60" width="10" height="10"/>
+                                    <rect x="60" y="60" width="10" height="10"/>
+                                </g>
+                            </svg>
+                            Pixel Cube Vision
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="kaleidoscope-tab" data-bs-toggle="tab" data-bs-target="#kaleidoscope" 
+                                type="button" role="tab" aria-controls="kaleidoscope" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .kaleidoscope-bg { fill: #9c27b0; }
+                                    .kaleidoscope-pattern { fill: #ffffff; opacity: 0.3; }
+                                </style>
+                                <circle class="kaleidoscope-bg" cx="50" cy="50" r="40"/>
+                                <path class="kaleidoscope-pattern" d="M50,10 L90,50 L50,90 L10,50 Z"/>
+                                <path class="kaleidoscope-pattern" d="M50,20 L80,50 L50,80 L20,50 Z"/>
+                                <path class="kaleidoscope-pattern" d="M50,30 L70,50 L50,70 L30,50 Z"/>
+                            </svg>
+                            Kaleidoscope Vision
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="animal-tab" data-bs-toggle="tab" data-bs-target="#animal" 
+                                type="button" role="tab" aria-controls="animal" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .animal-bg { fill: #28a745; }
+                                    .animal-eye { fill: #ffffff; }
+                                    .animal-pupil { fill: #000000; }
+                                </style>
+                                <circle class="animal-bg" cx="50" cy="50" r="40"/>
+                                <ellipse class="animal-eye" cx="50" cy="50" rx="30" ry="20"/>
+                                <ellipse class="animal-pupil" cx="50" cy="50" rx="15" ry="5"/>
+                            </svg>
+                            Animal Vision
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="visionTabsContent">
+                    <!-- Pixel Cube Vision Tab -->
+                    <div class="tab-pane fade show active" id="pixel-cube" role="tabpanel" aria-labelledby="pixel-cube-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <!-- Initial permission request UI -->
+                                <div id="startPrompt" class="text-center py-4">
+                                    <p class="mb-3">This simulator needs access to your camera to demonstrate the pixelation effect.</p>
+                                    <button id="startButton" class="btn btn-primary">Turn Camera On</button>
+                                </div>
 
-                        <video id="video" style="display: none;" autoplay playsinline crossorigin="anonymous"></video>
-                        <canvas id="canvas" class="w-100"></canvas>
+                                <video id="video" style="display: none;" autoplay playsinline crossorigin="anonymous"></video>
+                                <canvas id="canvas" class="w-100"></canvas>
 
-                        <div id="controls" class="controls mt-4" style="display: none;">
-                            <div class="row align-items-center">
-                                <div class="col-12 mb-3">
-                                    <div class="d-flex justify-content-between">
-                                        <button id="switchCamera" class="btn btn-secondary">
-                                            Turn Camera On
-                                        </button>
-                                        <button id="takeSnapshot" class="btn btn-primary">
-                                            Take Snapshot
-                                        </button>
-                                        <button id="recordVideo" class="btn btn-danger">
-                                            Capture Video 
-                                        </button>
+                                <div id="controls" class="controls mt-4" style="display: none;">
+                                    <div class="row align-items-center">
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <button id="switchCamera" class="btn btn-secondary">
+                                                    Turn Camera On
+                                                </button>
+                                                <button id="takeSnapshot" class="btn btn-primary">
+                                                    Take Snapshot
+                                                </button>
+                                                <button id="recordVideo" class="btn btn-danger">
+                                                    Capture Video 
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="pixelation" class="form-label">
+                                                Pixelation Level: <span id="pixelValue">16</span>
+                                            </label>
+                                            <input type="range" 
+                                                class="form-range" 
+                                                id="pixelation" 
+                                                min="5" 
+                                                max="50" 
+                                                value="16">
+                                        </div>
                                     </div>
                                 </div>
-                                <div class="col-12">
-                                    <label for="pixelation" class="form-label">
-                                        Pixelation Level: <span id="pixelValue">16</span>
-                                    </label>
-                                    <input type="range" 
-                                           class="form-range" 
-                                           id="pixelation" 
-                                           min="5" 
-                                           max="50" 
-                                           value="16">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kaleidoscope Vision Tab -->
+                    <div class="tab-pane fade" id="kaleidoscope" role="tabpanel" aria-labelledby="kaleidoscope-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <!-- Initial permission request UI -->
+                                <div id="kaleidoscopeStartPrompt" class="text-center py-4">
+                                    <p class="mb-3">This simulator needs access to your camera to demonstrate kaleidoscope effects.</p>
+                                    <button id="kaleidoscopeStartButton" class="btn btn-primary">Turn Camera On</button>
                                 </div>
+
+                                <div id="kaleidoscopeContainer" class="position-relative" style="display: none;">
+                                    <canvas id="kaleidoscopeCanvas" class="w-100 rounded"></canvas>
+                                    <div class="text-center mt-2 mb-3">
+                                        <small class="text-muted">Tip: The kaleidoscope effects work best with colorful scenes and movement</small>
+                                    </div>
+                                </div>
+
+                                <div id="kaleidoscopeControls" class="controls mt-4" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <button id="kaleidoscopeSwitchCamera" class="btn btn-secondary">
+                                                    Switch Camera
+                                                </button>
+                                                <button id="kaleidoscopeTakeSnapshot" class="btn btn-primary">
+                                                    Take Snapshot
+                                                </button>
+                                                <button id="kaleidoscopeRecordVideo" class="btn btn-danger">
+                                                    Capture Video
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Effect selector -->
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label">Effect Style:</label>
+                                            <div class="d-flex flex-wrap justify-content-between">
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn active" data-effect="basicBitch">Spiral Tunnel</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="fractalTwist">Fractal Twist</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="mirrorMaze">Mirror Maze</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="circularShards">Night Vision</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="prismaticBurst">Thermal Vision</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="colorInversion">X-Ray Vision</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Effect parameters -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeSegments" class="form-label">
+                                                Segments: <span id="segmentsValue">10</span>
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeSegments" 
+                                                   min="3" 
+                                                   max="16" 
+                                                   value="10">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeIntensity" class="form-label">
+                                                Intensity: <span id="intensityValue">10</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeIntensity" 
+                                                   min="10" 
+                                                   max="100" 
+                                                   value="10">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeRotation" class="form-label">
+                                                Rotation Speed: <span id="rotationValue">0</span>
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeRotation" 
+                                                   min="-10" 
+                                                   max="10" 
+                                                   value="0">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeZoom" class="form-label">
+                                                Zoom: <span id="zoomValue">100</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeZoom" 
+                                                   min="50" 
+                                                   max="150" 
+                                                   value="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Animal Vision Tab (Placeholder) -->
+                    <div class="tab-pane fade" id="animal" role="tabpanel" aria-labelledby="animal-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <h3 class="text-center mb-4">Animal Vision Simulator</h3>
+                                <p class="text-center">Coming soon! This tab will simulate how different animals see the world.</p>
                             </div>
                         </div>
                     </div>
@@ -152,7 +338,7 @@
             <div class="card-header d-flex justify-content-between align-items-center">
                 <div>
                     <h6 class="mb-0">Debug Logs</h6>
-                    <small class="text-muted" id="versionInfo">v0.3b</small>
+                    <small class="text-muted" id="versionInfo">v0.4a</small>
                 </div>
                 <div>
                     <!-- <button id="testLogBtn" class="btn btn-sm btn-primary me-2">Test Log</button> -->
@@ -276,8 +462,9 @@
                     
                     try {
                         await initWebcam();
-                        // Update button text to indicate current camera
+                        // Update button text to indicate current camera in both tabs
                         switchCameraButton.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                        kaleidoscopeSwitchCamera.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
                         
                         // Update mirroring based on current camera
                         updateCameraMirroring();
@@ -290,8 +477,9 @@
                     // First time: just turn the camera on
                     try {
                         await initWebcam();
-                        // Update button text to indicate switch option now
+                        // Update button text to indicate switch option now in both tabs
                         switchCameraButton.textContent = `Switch to Back Camera`;
+                        kaleidoscopeSwitchCamera.textContent = `Switch to Back Camera`;
                         
                         // Set initial mirroring
                         updateCameraMirroring();
@@ -535,13 +723,12 @@
                     snapshotEl.className = 'col-6 col-md-4 col-lg-3';
                     snapshotCount++;
                     
-                    // Create snapshot card
+                    // Create snapshot card - removed download button as requested
                     snapshotEl.innerHTML = `
                         <div class="card">
                             <img src="${imageDataUrl}" class="card-img-top" alt="Snapshot ${snapshotCount}">
                             <div class="card-footer text-center">
-                                <a href="${imageDataUrl}" download="pixel-cube-snapshot-${snapshotCount}.png" class="btn btn-sm btn-outline-primary">Download</a>
-                                <small class="text-muted ms-2">Snapshot ${snapshotCount}</small>
+                                <small class="text-muted">Snapshot ${snapshotCount}</small>
                             </div>
                         </div>
                     `;
@@ -739,12 +926,14 @@
 
                     // Check which MIME types are supported
                     function getSupportedMimeType() {
+                        // Prioritize MP4 for better iOS/Mac compatibility
                         const types = [
+                            'video/mp4;codecs=h264',
+                            'video/mp4',
+                            'video/webm;codecs=h264',
                             'video/webm;codecs=vp9',
                             'video/webm;codecs=vp8',
-                            'video/webm',
-                            'video/mp4',
-                            'video/mpeg'
+                            'video/webm'
                         ];
                         
                         for (let type of types) {
@@ -754,7 +943,7 @@
                             }
                         }
                         
-                        debugLog('No supported video MIME types found', true);
+                        debugLog('No supported video MIME types found, falling back to default', true);
                         return '';
                     }
 
@@ -767,7 +956,8 @@
                         const options = {};
                         if (mimeType) {
                             options.mimeType = mimeType;
-                            options.videoBitsPerSecond = 2500000; // 2.5 Mbps
+                            // Higher bitrate for better quality
+                            options.videoBitsPerSecond = 3000000; // 3 Mbps for better quality
                         }
                         
                         mediaRecorder = new MediaRecorder(stream, options);
@@ -797,25 +987,26 @@
                     downloadVideoBtn.className = 'btn btn-sm btn-outline-primary disabled';
                     downloadVideoBtn.textContent = 'Preparing Video...';
                     
-                    // Set file extension based on MIME type
+                    // Set file extension based on MIME type - prioritize MP4
                     const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
                     downloadVideoBtn.download = `pixel-cube-video-${snapshotCount}.${fileExtension}`;
 
                     // Handle video completion
                     mediaRecorder.onstop = () => {
-                        // Create blob from chunks
-                        const videoBlob = new Blob(chunks, { type: 'video/webm' });
+                        // Create blob from chunks with the appropriate type
+                        const videoType = mimeType || (fileExtension === 'mp4' ? 'video/mp4' : 'video/webm');
+                        const videoBlob = new Blob(chunks, { type: videoType });
                         const videoUrl = URL.createObjectURL(videoBlob);
-                        debugLog(`Video created: ${Math.round(videoBlob.size/1024)}KB`);
+                        debugLog(`Video created: ${Math.round(videoBlob.size/1024)}KB, type: ${videoType}`);
                         
                         // Update the download button to enable video download
                         downloadVideoBtn.href = videoUrl;
                         downloadVideoBtn.classList.remove('disabled');
-                        downloadVideoBtn.textContent = 'Download Video';
+                        downloadVideoBtn.textContent = `Download ${fileExtension.toUpperCase()} Video`;
                     };
 
-                    // Start recording
-                    mediaRecorder.start();
+                    // Start recording with more frequent data collection for better compatibility
+                    mediaRecorder.start(100); // Collect data every 100ms for smoother video
 
                     // Create each frame for the video
                     let frameIndex = 0;
@@ -902,7 +1093,7 @@
 
                     // Create an element to show in gallery
                     const videoEl = document.createElement('div');
-                    videoEl.className = 'col-12 col-md-6';
+                    videoEl.className = 'col-6 col-md-4 col-lg-3';
                     snapshotCount++;
                     
                     // Create container div for card
@@ -917,8 +1108,9 @@
                     const animContainer = document.createElement('div');
                     animContainer.className = 'animation-container';
                     animContainer.style.position = 'relative';
-                    animContainer.style.width = `${frameSize}px`;
-                    animContainer.style.height = `${frameSize}px`;
+                    animContainer.style.width = '100%';
+                    animContainer.style.height = 'auto';
+                    animContainer.style.aspectRatio = '1/1';
                     animContainer.style.overflow = 'hidden';
                     animContainer.style.backgroundColor = '#000';
                     animContainer.style.margin = '0 auto'; // Center it horizontally
@@ -1286,9 +1478,661 @@
 
             // Update the version tag code to include a fixed version number
             const buildDate = new Date().toLocaleDateString();
-            const versionNumber = "v0.3b"; // Incrementing version number
+            const versionNumber = "v0.5a"; // Updated from v0.4a to v0.5a
             document.getElementById('versionInfo').textContent = `${versionNumber} (${buildDate})`;
             debugLog(`Version info set: ${versionNumber} built on ${buildDate}`);
+            
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('.nav-link');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            // Function to switch tabs
+            function switchTab(targetId) {
+                // Hide all tab panes
+                tabPanes.forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Deactivate all tab buttons
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                    button.setAttribute('aria-selected', 'false');
+                });
+                
+                // Show the selected tab pane
+                const targetPane = document.getElementById(targetId);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+                
+                // Activate the selected tab button
+                const targetButton = document.querySelector(`[data-bs-target="#${targetId}"]`);
+                if (targetButton) {
+                    targetButton.classList.add('active');
+                    targetButton.setAttribute('aria-selected', 'true');
+                }
+                
+                // Log the tab switch
+                debugLog(`Switched to ${targetId} tab`);
+            }
+            
+            // Add click event listeners to tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = button.getAttribute('data-bs-target').substring(1);
+                    switchTab(targetId);
+                });
+            });
+            
+            debugLog("Tab navigation initialized");
+            
+            // Kaleidoscope functionality
+            const kaleidoscopeCanvas = document.getElementById('kaleidoscopeCanvas');
+            const kaleidoscopeStartButton = document.getElementById('kaleidoscopeStartButton');
+            const kaleidoscopeStartPrompt = document.getElementById('kaleidoscopeStartPrompt');
+            const kaleidoscopeContainer = document.getElementById('kaleidoscopeContainer');
+            const kaleidoscopeControls = document.getElementById('kaleidoscopeControls');
+            const kaleidoscopeSwitchCamera = document.getElementById('kaleidoscopeSwitchCamera');
+            const kaleidoscopeTakeSnapshot = document.getElementById('kaleidoscopeTakeSnapshot');
+            const kaleidoscopeRecordVideo = document.getElementById('kaleidoscopeRecordVideo');
+
+            // Helper function for video recording
+            function getSupportedMimeType() {
+                const types = [
+                    'video/mp4;codecs=h264',
+                    'video/mp4',
+                    'video/webm;codecs=h264',
+                    'video/webm;codecs=vp9',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ];
+                
+                for (let type of types) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        debugLog(`Using supported MIME type: ${type}`);
+                        return type;
+                    }
+                }
+                
+                debugLog('No supported video MIME types found, falling back to default', true);
+                return '';
+            }
+
+            // Effect controls
+            // Add event listener for kaleidoscope start button
+            kaleidoscopeStartButton.addEventListener('click', () => {
+                debugLog('Starting kaleidoscope webcam initialization...');
+                initKaleidoscopeWebcam().catch(err => {
+                    debugLog('Failed to initialize kaleidoscope webcam:', err);
+                    errorMessage.textContent = 'Failed to initialize camera. Please ensure you have granted camera permissions.';
+                    errorMessage.style.display = 'block';
+                });
+            });
+
+            // Add event listener for kaleidoscope switch camera button
+            kaleidoscopeSwitchCamera.addEventListener('click', switchCamera);
+            
+            // Add event listeners for snapshot and recording
+            kaleidoscopeTakeSnapshot.addEventListener('click', takeKaleidoscopeSnapshot);
+            kaleidoscopeRecordVideo.addEventListener('click', startKaleidoscopeRecording);
+            
+            // Effect controls
+            const segmentsSlider = document.getElementById('kaleidoscopeSegments');
+            const intensitySlider = document.getElementById('kaleidoscopeIntensity');
+            const rotationSlider = document.getElementById('kaleidoscopeRotation');
+            const zoomSlider = document.getElementById('kaleidoscopeZoom');
+            const effectButtons = document.querySelectorAll('.kaleidoscope-effect-btn');
+            
+            // Value display spans
+            const segmentsValue = document.getElementById('segmentsValue');
+            const intensityValue = document.getElementById('intensityValue');
+            const rotationValue = document.getElementById('rotationValue');
+            const zoomValue = document.getElementById('zoomValue');
+            
+            // Function to update value displays
+            function updateValueDisplays() {
+                segmentsValue.textContent = segmentsSlider.value;
+                intensityValue.textContent = intensitySlider.value;
+                rotationValue.textContent = rotationSlider.value;
+                zoomValue.textContent = zoomSlider.value;
+            }
+            
+            // Add event listeners for sliders
+            segmentsSlider.addEventListener('input', updateValueDisplays);
+            intensitySlider.addEventListener('input', updateValueDisplays);
+            rotationSlider.addEventListener('input', updateValueDisplays);
+            zoomSlider.addEventListener('input', updateValueDisplays);
+            
+            // Kaleidoscope state
+            let currentKaleidoscopeEffect = 'basicBitch';
+            let kaleidoscopeRotationAngle = 0;
+            let kaleidoscopeIsRecording = false;
+            let kaleidoscopeRecordingFrames = [];
+            
+            // Initialize kaleidoscope canvas
+            kaleidoscopeCanvas.width = 576;
+            kaleidoscopeCanvas.height = 576;
+            const kCtx = kaleidoscopeCanvas.getContext('2d');
+            
+            // Draw initial message on kaleidoscope canvas
+            kCtx.fillStyle = "#444";
+            kCtx.fillRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+            kCtx.fillStyle = "#f00";
+            kCtx.font = "24px Arial";
+            kCtx.fillText("Click 'Turn Camera On' to start", 160, kaleidoscopeCanvas.height/2);
+            
+            // Set default values for controls
+            segmentsSlider.value = '10';
+            intensitySlider.value = '10';
+            rotationSlider.value = '0';
+            zoomSlider.value = '100';
+            updateValueDisplays();
+            
+            // Effect button click handler
+            effectButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    effectButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentKaleidoscopeEffect = button.dataset.effect;
+                    debugLog(`Switched to ${currentKaleidoscopeEffect} effect`);
+                });
+            });
+            
+            // Initialize kaleidoscope webcam
+            async function initKaleidoscopeWebcam() {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('WebRTC API not supported in this browser');
+                    }
+
+                    // If we already have a stream, use it
+                    if (currentStream && video.srcObject) {
+                        // Show kaleidoscope view
+                        kaleidoscopeStartPrompt.style.display = 'none';
+                        kaleidoscopeContainer.style.display = 'block';
+                        kaleidoscopeControls.style.display = 'block';
+                        
+                        // Start kaleidoscope animation
+                        animateKaleidoscope();
+                        
+                        debugLog('Kaleidoscope using existing camera stream');
+                        return;
+                    }
+
+                    // Otherwise initialize new stream
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 576 },
+                            height: { ideal: 576 },
+                            aspectRatio: { ideal: 1 }
+                        } 
+                    });
+
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    // Wait for video to be ready
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            video.play().then(resolve);
+                        };
+                    });
+                    
+                    // Show kaleidoscope view
+                    kaleidoscopeStartPrompt.style.display = 'none';
+                    kaleidoscopeContainer.style.display = 'block';
+                    kaleidoscopeControls.style.display = 'block';
+                    
+                    // Update camera switch button text
+                    kaleidoscopeSwitchCamera.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                    
+                    // Start kaleidoscope animation
+                    animateKaleidoscope();
+                    
+                    debugLog('Kaleidoscope camera initialized');
+                } catch (err) {
+                    debugLog('Kaleidoscope camera error: ' + err.message, true);
+                    errorMessage.textContent = 'Failed to initialize camera: ' + err.message;
+                    errorMessage.style.display = 'block';
+                }
+            }
+            
+            // Kaleidoscope effect rendering
+            function applyKaleidoscopeEffect(ctx, segments, intensity, zoom, effect) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Create temporary canvas for source image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw video frame
+                tempCtx.drawImage(video, 0, 0, width, height);
+                
+                // Clear main canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Apply selected effect
+                switch(effect) {
+                    case 'basicBitch':
+                        // Spiral tunnel effect
+                        const maxLayers = 12;
+                        const scaleStep = 0.85;
+                        let currentScale = 1.0 * (zoom/100);
+                        
+                        for(let i = 0; i < maxLayers; i++) {
+                            ctx.save();
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate(kaleidoscopeRotationAngle + (i * 0.2));
+                            ctx.scale(currentScale, currentScale);
+                            ctx.drawImage(tempCanvas, -centerX, -centerY);
+                            ctx.restore();
+                            
+                            currentScale *= scaleStep;
+                        }
+                        break;
+                        
+                    case 'fractalTwist':
+                        // Fractal-like recursive effect
+                        for(let i = 0; i < segments; i++) {
+                            const scale = 1 - (i * 0.1);
+                            ctx.save();
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate((i * 2 * Math.PI / segments) + kaleidoscopeRotationAngle);
+                            ctx.scale(scale * zoom/100, scale * zoom/100);
+                            ctx.drawImage(tempCanvas, -centerX, -centerY);
+                            ctx.restore();
+                        }
+                        break;
+                        
+                    case 'mirrorMaze':
+                        // Mirror maze effect
+                        const tileSize = width / (segments/2);
+                        for(let x = 0; x < width; x += tileSize) {
+                            for(let y = 0; y < height; y += tileSize) {
+                                ctx.save();
+                                ctx.translate(x + tileSize/2, y + tileSize/2);
+                                ctx.rotate(kaleidoscopeRotationAngle);
+                                ctx.scale(zoom/100, zoom/100);
+                                ctx.drawImage(tempCanvas, -tileSize/2, -tileSize/2, tileSize, tileSize);
+                                ctx.restore();
+                            }
+                        }
+                        break;
+                        
+                    case 'circularShards':
+                        // Night Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        
+                        // Apply green tint and glow
+                        ctx.globalCompositeOperation = 'screen';
+                        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                        ctx.fillRect(0, 0, width, height);
+                        
+                        // Add noise effect
+                        const imageData = ctx.getImageData(0, 0, width, height);
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            const noise = Math.random() * 20 - 10;
+                            data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+                            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        ctx.restore();
+                        break;
+                        
+                    case 'prismaticBurst':
+                        // Thermal Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        const thermalData = ctx.getImageData(0, 0, width, height);
+                        const pixels = thermalData.data;
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            const avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+                            if (avg < 85) {
+                                pixels[i] = avg * 3; // Red
+                                pixels[i + 1] = 0;   // Green
+                                pixels[i + 2] = 0;   // Blue
+                            } else if (avg < 170) {
+                                pixels[i] = 255;     // Red
+                                pixels[i + 1] = avg;  // Green
+                                pixels[i + 2] = 0;    // Blue
+                            } else {
+                                pixels[i] = 255;      // Red
+                                pixels[i + 1] = 255;  // Green
+                                pixels[i + 2] = avg - 170; // Blue
+                            }
+                        }
+                        ctx.putImageData(thermalData, 0, 0);
+                        ctx.restore();
+                        break;
+                        
+                    case 'colorInversion':
+                        // X-Ray Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        const xrayData = ctx.getImageData(0, 0, width, height);
+                        const xrayPixels = xrayData.data;
+                        for (let i = 0; i < xrayPixels.length; i += 4) {
+                            const avg = (xrayPixels[i] + xrayPixels[i + 1] + xrayPixels[i + 2]) / 3;
+                            const inverted = 255 - avg;
+                            xrayPixels[i] = inverted;
+                            xrayPixels[i + 1] = inverted;
+                            xrayPixels[i + 2] = inverted * 1.2;
+                        }
+                        ctx.putImageData(xrayData, 0, 0);
+                        // Add blue tint
+                        ctx.globalCompositeOperation = 'overlay';
+                        ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.restore();
+                        break;
+                }
+                
+                // Apply intensity blend
+                ctx.globalAlpha = intensity / 100;
+                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.globalAlpha = 1.0;
+            }
+            
+            // Kaleidoscope animation loop
+            function animateKaleidoscope() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Update rotation angle based on rotation speed
+                    kaleidoscopeRotationAngle += parseFloat(rotationSlider.value) * 0.01;
+                    
+                    // Apply kaleidoscope effect
+                    applyKaleidoscopeEffect(
+                        kCtx,
+                        parseInt(segmentsSlider.value),
+                        parseInt(intensitySlider.value),
+                        parseInt(zoomSlider.value),
+                        currentKaleidoscopeEffect
+                    );
+                }
+                
+                requestAnimationFrame(animateKaleidoscope);
+            }
+            
+            // Kaleidoscope snapshot function
+            function takeKaleidoscopeSnapshot() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const imageDataUrl = kaleidoscopeCanvas.toDataURL('image/png');
+                    
+                    const snapshotEl = document.createElement('div');
+                    snapshotEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    snapshotEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageDataUrl}" class="card-img-top" alt="Kaleidoscope ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <small class="text-muted">Kaleidoscope ${snapshotCount}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    snapshotsDiv.prepend(snapshotEl);
+                    snapshotsContainer.style.display = 'block';
+                }
+            }
+            
+            // Kaleidoscope video recording
+            function startKaleidoscopeRecording() {
+                if (kaleidoscopeIsRecording) return;
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    debugLog("Cannot record kaleidoscope, video not ready", true);
+                    return;
+                }
+                
+                debugLog("Starting kaleidoscope video recording...");
+                kaleidoscopeIsRecording = true;
+                kaleidoscopeRecordingFrames = [];
+                kaleidoscopeRecordVideo.textContent = "0.0s of 7.0s";
+                kaleidoscopeRecordVideo.disabled = true;
+                
+                let framesLeft = 35; // 7 seconds at 5fps
+                let totalFrames = framesLeft;
+                let elapsedTime = 0;
+                
+                const timerInterval = setInterval(() => {
+                    elapsedTime += 0.1;
+                    const timeDisplay = elapsedTime.toFixed(1);
+                    kaleidoscopeRecordVideo.textContent = `${timeDisplay}s of 7.0s`;
+                }, 100);
+                
+                function captureKaleidoscopeFrame() {
+                    if (framesLeft <= 0 || !kaleidoscopeIsRecording) {
+                        clearInterval(timerInterval);
+                        debugLog(`Captured all ${totalFrames} kaleidoscope frames`);
+                        finishKaleidoscopeRecording();
+                        return;
+                    }
+                    
+                    try {
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = kaleidoscopeCanvas.width;
+                        frameCanvas.height = kaleidoscopeCanvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        frameCtx.drawImage(kaleidoscopeCanvas, 0, 0);
+                        kaleidoscopeRecordingFrames.push(frameCanvas);
+                        debugLog(`Captured kaleidoscope frame ${totalFrames-framesLeft+1}/${totalFrames}`);
+                    } catch (e) {
+                        debugLog(`Error capturing kaleidoscope frame: ${e.message}`, true);
+                    }
+                    
+                    framesLeft--;
+                    setTimeout(captureKaleidoscopeFrame, 200);
+                }
+                
+                captureKaleidoscopeFrame();
+            }
+            
+            function finishKaleidoscopeRecording() {
+                if (!kaleidoscopeIsRecording) return;
+                
+                kaleidoscopeRecordVideo.textContent = "Processing...";
+                kaleidoscopeRecordVideo.disabled = true;
+                
+                try {
+                    // Create video element using the same process as pixel cube recording
+                    const videoEl = document.createElement('div');
+                    videoEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create the video canvas and processing
+                    const videoCanvas = document.createElement('canvas');
+                    videoCanvas.width = kaleidoscopeCanvas.width;
+                    videoCanvas.height = kaleidoscopeCanvas.height;
+                    const videoCtx = videoCanvas.getContext('2d');
+                    
+                    const stream = videoCanvas.captureStream(30);
+                    const mimeType = getSupportedMimeType();
+                    
+                    const mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: mimeType,
+                        videoBitsPerSecond: 3000000
+                    });
+                    
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) chunks.push(e.data);
+                    };
+                    
+                    // Create the video element UI
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+                    
+                    const animContainer = document.createElement('div');
+                    animContainer.className = 'animation-container';
+                    animContainer.style.position = 'relative';
+                    animContainer.style.width = '100%';
+                    animContainer.style.height = 'auto';
+                    animContainer.style.aspectRatio = '1/1';
+                    animContainer.style.overflow = 'hidden';
+                    animContainer.style.backgroundColor = '#000';
+                    
+                    const animImage = document.createElement('img');
+                    animImage.style.width = '100%';
+                    animImage.style.height = '100%';
+                    animContainer.appendChild(animImage);
+                    
+                    // Process frames and create video
+                    const frameDataUrls = kaleidoscopeRecordingFrames.map(frame => {
+                        return frame.toDataURL('image/jpeg', 0.7);
+                    });
+                    
+                    animImage.src = frameDataUrls[0];
+                    
+                    // Create controls
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'animation-controls d-flex mt-2 justify-content-between';
+                    
+                    const animBtnsDiv = document.createElement('div');
+                    animBtnsDiv.className = 'd-flex';
+                    
+                    const playPauseBtn = document.createElement('button');
+                    playPauseBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                    playPauseBtn.textContent = 'Play';
+                    
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.textContent = 'Reset';
+                    
+                    const downloadsDiv = document.createElement('div');
+                    downloadsDiv.className = 'd-flex';
+                    
+                    // Handle video creation
+                    mediaRecorder.onstop = () => {
+                        const videoBlob = new Blob(chunks, { type: mimeType || 'video/webm' });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        
+                        const downloadVideoBtn = document.createElement('a');
+                        downloadVideoBtn.className = 'btn btn-sm btn-outline-primary';
+                        downloadVideoBtn.href = videoUrl;
+                        downloadVideoBtn.download = `kaleidoscope-video-${snapshotCount}.${mimeType.includes('mp4') ? 'mp4' : 'webm'}`;
+                        downloadVideoBtn.textContent = 'Download Video';
+                        
+                        downloadsDiv.appendChild(downloadVideoBtn);
+                    };
+                    
+                    // Animation controls
+                    let isPlaying = false;
+                    let currentFrame = 0;
+                    let animationInterval;
+                    
+                    function updateAnimation() {
+                        currentFrame = (currentFrame + 1) % frameDataUrls.length;
+                        animImage.src = frameDataUrls[currentFrame];
+                    }
+                    
+                    function togglePlayPause() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            playPauseBtn.textContent = 'Play';
+                        } else {
+                            animationInterval = setInterval(updateAnimation, 200);
+                            playPauseBtn.textContent = 'Pause';
+                        }
+                        isPlaying = !isPlaying;
+                    }
+                    
+                    function resetAnimation() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            isPlaying = false;
+                            playPauseBtn.textContent = 'Play';
+                        }
+                        currentFrame = 0;
+                        animImage.src = frameDataUrls[0];
+                    }
+                    
+                    playPauseBtn.addEventListener('click', togglePlayPause);
+                    resetBtn.addEventListener('click', resetAnimation);
+                    
+                    // Assemble UI
+                    animBtnsDiv.appendChild(playPauseBtn);
+                    animBtnsDiv.appendChild(resetBtn);
+                    controlsDiv.appendChild(animBtnsDiv);
+                    controlsDiv.appendChild(downloadsDiv);
+                    
+                    cardBody.appendChild(animContainer);
+                    cardBody.appendChild(controlsDiv);
+                    
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'card-footer text-center';
+                    cardFooter.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Frames: ${frameDataUrls.length}</small>
+                            <small class="text-success">5 fps animation</small>
+                        </div>
+                    `;
+                    
+                    cardDiv.appendChild(cardBody);
+                    cardDiv.appendChild(cardFooter);
+                    videoEl.appendChild(cardDiv);
+                    
+                    // Add to gallery
+                    snapshotsDiv.prepend(videoEl);
+                    snapshotsContainer.style.display = 'block';
+                    
+                    // Start video creation
+                    mediaRecorder.start(100);
+                    let frameIndex = 0;
+                    
+                    function processNextVideoFrame() {
+                        if (frameIndex >= frameDataUrls.length) {
+                            mediaRecorder.stop();
+                            return;
+                        }
+                        
+                        const img = new Image();
+                        img.onload = () => {
+                            videoCtx.fillStyle = "#000";
+                            videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.drawImage(img, 0, 0);
+                            
+                            kaleidoscopeRecordVideo.textContent = `Creating video ${Math.round((frameIndex+1) / frameDataUrls.length * 100)}%`;
+                            
+                            setTimeout(() => {
+                                frameIndex++;
+                                processNextVideoFrame();
+                            }, 200);
+                        };
+                        
+                        img.onerror = () => {
+                            debugLog(`Error loading kaleidoscope frame ${frameIndex}`, true);
+                            frameIndex++;
+                            processNextVideoFrame();
+                        };
+                        
+                        img.src = frameDataUrls[frameIndex];
+                    }
+                    
+                    processNextVideoFrame();
+                    
+                } catch (error) {
+                    debugLog("Error processing kaleidoscope frames: " + error.message, true);
+                    alert("Error creating kaleidoscope animation: " + error.message);
+                } finally {
+                    kaleidoscopeIsRecording = false;
+                    kaleidoscopeRecordingFrames = [];
+                    kaleidoscopeRecordVideo.textContent = "Capture Video";
+                    kaleidoscopeRecordVideo.disabled = false;
+                }
+            }
         });
     </script>
 </body>
