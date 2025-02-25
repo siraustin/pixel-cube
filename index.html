@@ -8,14 +8,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
     <style>
         .logo {
-            width: 100px;
+            width: 80px;
             height: auto;
+            margin-right: 15px;
         }
 
         #canvas {
             background-color: var(--bs-dark);
             border-radius: 8px;
             max-height: 70vh;
+            width: 100%;
+            height: auto;
         }
 
         .controls {
@@ -31,31 +34,55 @@
         .form-range::-moz-range-thumb {
             background: var(--bs-primary);
         }
+        
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+        
+        .header-title {
+            font-size: 1.8rem;
+            margin: 0;
+            white-space: nowrap;
+        }
+        
+        @media (max-width: 576px) {
+            .header-title {
+                font-size: 1.4rem;
+            }
+            .logo {
+                width: 60px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container py-4">
         <div class="row justify-content-center">
-            <div class="col-12 text-center mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" class="logo mb-3">
-                    <style>
-                        .cube { fill: #007bff; }
-                        .pixels { fill: #ffffff; opacity: 0.3; }
-                    </style>
-                    <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
-                    <g class="pixels">
-                        <rect x="30" y="30" width="10" height="10"/>
-                        <rect x="45" y="30" width="10" height="10"/>
-                        <rect x="60" y="30" width="10" height="10"/>
-                        <rect x="30" y="45" width="10" height="10"/>
-                        <rect x="45" y="45" width="10" height="10"/>
-                        <rect x="60" y="45" width="10" height="10"/>
-                        <rect x="30" y="60" width="10" height="10"/>
-                        <rect x="45" y="60" width="10" height="10"/>
-                        <rect x="60" y="60" width="10" height="10"/>
-                    </g>
-                </svg>
-                <h1 class="display-5">Pixelated Vision Cube Simulator</h1>
+            <div class="col-12 text-center mb-2">
+                <div class="header-container">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="logo">
+                        <style>
+                            .cube { fill: #007bff; }
+                            .pixels { fill: #ffffff; opacity: 0.3; }
+                        </style>
+                        <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
+                        <g class="pixels">
+                            <rect x="30" y="30" width="10" height="10"/>
+                            <rect x="45" y="30" width="10" height="10"/>
+                            <rect x="60" y="30" width="10" height="10"/>
+                            <rect x="30" y="45" width="10" height="10"/>
+                            <rect x="45" y="45" width="10" height="10"/>
+                            <rect x="60" y="45" width="10" height="10"/>
+                            <rect x="30" y="60" width="10" height="10"/>
+                            <rect x="45" y="60" width="10" height="10"/>
+                            <rect x="60" y="60" width="10" height="10"/>
+                        </g>
+                    </svg>
+                    <h1 class="header-title">Pixelated Vision Cube Simulator</h1>
+                </div>
             </div>
 
             <div class="col-12 col-md-10 col-lg-8">
@@ -189,13 +216,13 @@
             // Draw initial canvas message
             const canvas = document.getElementById('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 640;
-            canvas.height = 640;
+            canvas.width = 576;  // Reduced from 640 (10% smaller)
+            canvas.height = 576; // Reduced from 640 (10% smaller)
             ctx.fillStyle = "#444";
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#f00";
             ctx.font = "24px Arial";
-            ctx.fillText("Click 'Turn Camera On' to start", 180, canvas.height/2);
+            ctx.fillText("Click 'Turn Camera On' to start", 160, canvas.height/2);
             
             const video = document.getElementById('video');
             const pixelationSlider = document.getElementById('pixelation');
@@ -219,8 +246,8 @@
             let snapshotCount = 0;
 
             // Set initial canvas size to 1:1 aspect ratio
-            canvas.width = 640;
-            canvas.height = 640;
+            canvas.width = 576;  // Reduced from 640 (10% smaller)
+            canvas.height = 576; // Reduced from 640 (10% smaller)
 
             // Update pixelation value display
             pixelationSlider.addEventListener('input', (e) => {
@@ -287,8 +314,8 @@
                     const stream = await navigator.mediaDevices.getUserMedia({ 
                         video: { 
                             facingMode: currentFacingMode,
-                            width: { ideal: 640 },
-                            height: { ideal: 640 }, // Request square aspect ratio
+                            width: { ideal: 576 },  // Reduced from 640
+                            height: { ideal: 576 }, // Reduced from 640
                             aspectRatio: { ideal: 1 } // Force 1:1 aspect ratio
                         } 
                     });
@@ -620,8 +647,8 @@
                     
                     // Create a canvas for the static image
                     const gridCanvas = document.createElement('canvas');
-                    gridCanvas.width = 640;
-                    gridCanvas.height = 480;
+                    gridCanvas.width = 576;  // Reduced from 640
+                    gridCanvas.height = 432;  // Reduced from 480
                     const ctx = gridCanvas.getContext('2d');
                     
                     // Fill with black background
@@ -665,7 +692,7 @@
                     
                     // Create individual frame images as data URLs
                     const frameDataUrls = [];
-                    const frameSize = 320; // Animation size
+                    const frameSize = 288; // Animation size (reduced from 320)
                     
                     // Create a temporary canvas for frame resizing
                     const tempCanvas = document.createElement('canvas');
