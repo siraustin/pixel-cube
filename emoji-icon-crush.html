@@ -292,51 +292,14 @@
         const { row, col } = shape[i];
         if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
           board[row][col] = {
-            emoji: currentPiece[i].emoji
+            emoji: currentPiece[i].emoji,
+            flashing: false
           };
         }
       }
       
       playSound(dropSound);
       clearLines();
-      checkMatches();
-    }
-
-    // Traditional Tetris row clearing
-    function clearLines() {
-      let linesCleared = 0;
-      for (let r = ROWS - 1; r >= 0; r--) {
-        let filled = true;
-        for (let c = 0; c < COLS; c++) {
-          if (!board[r][c]) {
-            filled = false;
-            break;
-          }
-        }
-        if (filled) {
-          linesCleared++;
-          // Remove line
-          for (let c = 0; c < COLS; c++) {
-            board[r][c] = null;
-          }
-          // Shift all above rows down
-          for (let yy = r; yy > 0; yy--) {
-            for (let cc = 0; cc < COLS; cc++) {
-              board[yy][cc] = board[yy - 1][cc];
-            }
-          }
-          // Clear top row
-          for (let cc = 0; cc < COLS; cc++) {
-            board[0][cc] = null;
-          }
-          r++;
-        }
-      }
-      if (linesCleared > 0) {
-        playSound(clearSound);
-        const linePoints = [0, 100, 300, 500, 800]; // Up to 4 lines
-        score += linePoints[Math.min(linesCleared, 4)];
-      }
     }
 
     // Check for candy-crush style matches of >= 3 identical emojis
@@ -377,15 +340,136 @@
       }
       // Clear them
       if (uniqueRemovals.length > 0) {
-        for (const [rr, cc] of uniqueRemovals) {
-          board[rr][cc] = null;
+        // Animate the blocks before removing them
+        animateBlockRemoval(uniqueRemovals, 'match').then(() => {
+          // After animation completes, remove the blocks
+          for (const [rr, cc] of uniqueRemovals) {
+            board[rr][cc] = null;
+          }
+          playSound(clearSound);
+          score += uniqueRemovals.length * 10;
+          applyGravity();
+          // Chain combos
+          checkMatches();
+        });
+      }
+    }
+
+    // Traditional Tetris row clearing
+    function clearLines() {
+      let linesCleared = 0;
+      let fullRows = [];
+      
+      // Find full rows
+      for (let r = ROWS - 1; r >= 0; r--) {
+        let filled = true;
+        for (let c = 0; c < COLS; c++) {
+          if (!board[r][c]) {
+            filled = false;
+            break;
+          }
         }
-        playSound(clearSound);
-        score += uniqueRemovals.length * 10;
-        applyGravity();
-        // Chain combos
+        if (filled) {
+          fullRows.push(r);
+          linesCleared++;
+        }
+      }
+      
+      if (linesCleared > 0) {
+        // Create array of positions to animate
+        const positions = [];
+        for (const row of fullRows) {
+          for (let c = 0; c < COLS; c++) {
+            positions.push([row, c]);
+          }
+        }
+        
+        // Animate the blocks before removing them
+        animateBlockRemoval(positions, 'line').then(() => {
+          // Process rows from bottom to top
+          for (let i = 0; i < fullRows.length; i++) {
+            const r = fullRows[i];
+            
+            // Remove line
+            for (let c = 0; c < COLS; c++) {
+              board[r][c] = null;
+            }
+            
+            // Shift all above rows down
+            for (let yy = r; yy > 0; yy--) {
+              for (let cc = 0; cc < COLS; cc++) {
+                board[yy][cc] = board[yy - 1][cc];
+              }
+            }
+            
+            // Clear top row
+            for (let cc = 0; cc < COLS; cc++) {
+              board[0][cc] = null;
+            }
+            
+            // Adjust remaining row indices since we've shifted rows down
+            for (let j = i + 1; j < fullRows.length; j++) {
+              if (fullRows[j] < fullRows[i]) {
+                fullRows[j]++;
+              }
+            }
+          }
+          
+          playSound(clearSound);
+          const linePoints = [0, 100, 300, 500, 800]; // Up to 4 lines
+          score += linePoints[Math.min(linesCleared, 4)];
+          
+          // Check for matches after lines are cleared
+          checkMatches();
+        });
+      } else {
+        // No lines to clear, proceed to check matches
         checkMatches();
       }
+    }
+
+    // Animate blocks before removal (flashing effect)
+    function animateBlockRemoval(positions, type) {
+      return new Promise(resolve => {
+        const flashCount = 3; // Number of flashes
+        const flashDuration = 100; // Duration of each flash in ms
+        let currentFlash = 0;
+        
+        // Store original colors for each position
+        const originalColors = positions.map(([r, c]) => {
+          return { row: r, col: c, emoji: board[r][c].emoji };
+        });
+        
+        function flash() {
+          if (currentFlash >= flashCount * 2) {
+            // Animation complete
+            resolve();
+            return;
+          }
+          
+          const isVisible = currentFlash % 2 === 0;
+          
+          for (const [r, c] of positions) {
+            if (board[r] && board[r][c]) {
+              // Mark the cell as flashing or restore it
+              if (isVisible) {
+                // Flash with bright color based on type
+                board[r][c].flashing = true;
+                board[r][c].flashColor = type === 'line' ? '#ffffff' : '#ffcc00';
+              } else {
+                // Restore original
+                board[r][c].flashing = false;
+              }
+            }
+          }
+          
+          currentFlash++;
+          setTimeout(flash, flashDuration);
+        }
+        
+        // Start the flashing animation
+        flash();
+      });
     }
 
     function applyGravity() {
@@ -495,6 +579,14 @@
       // Draw black square
       ctx.fillStyle = "#000";
       ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+      // Check if this cell is flashing (about to be removed)
+      const cell = board[row] && board[row][col];
+      if (cell && cell.flashing) {
+        // Draw a flashing background
+        ctx.fillStyle = cell.flashColor || '#ffcc00';
+        ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+      }
 
       // Draw the emoji (centered)
       ctx.fillStyle = "#fff";
