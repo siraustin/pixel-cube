@@ -616,13 +616,17 @@
       return colorPalette[Math.floor(Math.random() * colorPalette.length)];
     }
 
+    // Start generating the next piece in the side panel
+    let nextPiece = null;
+    async function startGeneratingNextPiece() {
+      if (!nextPiece) {
+        // Remove the webcam readyState check to allow piece generation without webcam
+        nextPiece = await animatePieceBuilding();
+      }
+    }
+
     // New function to animate building a piece without pausing the game
     async function animatePieceBuilding() {
-      if (!video.readyState === video.HAVE_ENOUGH_DATA) {
-        // If no webcam, just create a piece without animation
-        return createPiece();
-      }
-      
       isGeneratingPiece = true;
       piecePreview.style.display = 'block';
       piecePreview.innerHTML = '';
@@ -684,12 +688,23 @@
         // Capture and pixelate
         await new Promise(resolve => setTimeout(resolve, 200)); // Short delay
         
-        // Generate texture for this block
-        const texture = getPixelatedTexture();
+        // Generate texture for this block - handle webcam off case
+        let texture;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          texture = getPixelatedTexture();
+        } else {
+          // Create a fallback texture with random color when webcam is off
+          const randomColor = getRandomColor();
+          texture = {
+            canvas: null,
+            color: randomColor
+          };
+        }
+        
         pieceData[i].texture = texture.canvas;
         pieceData[i].color = texture.color;
         
-        // Show the captured texture
+        // Show the captured texture or fallback color
         if (texture.canvas) {
           // Create a copy of the texture canvas
           const canvas = document.createElement('canvas');
@@ -699,18 +714,19 @@
           
           previewBlocks[i].style.backgroundImage = `url(${canvas.toDataURL()})`;
           previewBlocks[i].style.backgroundSize = 'cover';
-          
-          // Add color indicators for all four corners
-          const colors = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
-          colors.forEach(pos => {
-            const indicator = document.createElement('div');
-            indicator.className = `colorIndicator ${pos}`;
-            indicator.style.backgroundColor = texture.color;
-            previewBlocks[i].appendChild(indicator);
-          });
         } else {
+          // Use solid color background when webcam is off
           previewBlocks[i].style.backgroundColor = texture.color;
         }
+        
+        // Add color indicators for all four corners
+        const colors = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
+        colors.forEach(pos => {
+          const indicator = document.createElement('div');
+          indicator.className = `colorIndicator ${pos}`;
+          indicator.style.backgroundColor = texture.color;
+          previewBlocks[i].appendChild(indicator);
+        });
         
         await new Promise(resolve => setTimeout(resolve, 200)); // Short delay
       }
@@ -728,14 +744,6 @@
       const piece = pieceData;
       piece.shapeCoords = shape;
       return piece;
-    }
-    
-    // Start generating the next piece in the side panel
-    let nextPiece = null;
-    async function startGeneratingNextPiece() {
-      if (!nextPiece && video.readyState === video.HAVE_ENOUGH_DATA) {
-        nextPiece = await animatePieceBuilding();
-      }
     }
     
     // Updated createPiece to use animatePieceBuilding when possible
