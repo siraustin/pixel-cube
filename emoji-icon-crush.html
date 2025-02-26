@@ -598,39 +598,6 @@
       const yCenter = row * BLOCK_SIZE + BLOCK_SIZE / 2;
       ctx.fillText(emojiChar, xCenter, yCenter);
 
-      // Draw color indicators in corners
-      ctx.fillStyle = "#ff5555";
-      // top-left
-      ctx.beginPath();
-      ctx.moveTo(col * BLOCK_SIZE, row * BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE * 0.25, row * BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE * 0.25);
-      ctx.fill();
-
-      // top-right
-      ctx.fillStyle = "#55ff55";
-      ctx.beginPath();
-      ctx.moveTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row * BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE * 0.25);
-      ctx.fill();
-
-      // bottom-left
-      ctx.fillStyle = "#5555ff";
-      ctx.beginPath();
-      ctx.moveTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE * 0.25, row * BLOCK_SIZE + BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
-      ctx.fill();
-
-      // bottom-right
-      ctx.fillStyle = "#ffff55";
-      ctx.beginPath();
-      ctx.moveTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row * BLOCK_SIZE + BLOCK_SIZE);
-      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
-      ctx.fill();
-
       ctx.strokeStyle = "#222";
       ctx.strokeRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
     }
