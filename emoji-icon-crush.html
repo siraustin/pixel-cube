@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Emoji Icon Crush</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #333;
+      color: #ddd;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    canvas {
+      background: #000;
+      display: block;
+      margin: 0 auto;
+      border: 2px solid #555;
+    }
+    #info {
+      margin: 10px auto;
+      width: 400px;
+      font-size: 14px;
+      line-height: 1.6em;
+    }
+    #controls {
+      margin: 10px auto;
+      width: 400px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 15px;
+      background: #555;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #777;
+    }
+    .slider-container {
+      margin: 10px auto;
+      width: 350px;
+      text-align: left;
+    }
+    #emojiSelection {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 450px;
+      text-align: left;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+    }
+    .emojiField {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 5px;
+      width: 48%;
+    }
+    .emojiField label {
+      font-size: 14px;
+      margin-bottom: 3px;
+      color: #ccc;
+    }
+    .emojiField input {
+      padding: 6px;
+      font-size: 16px;
+      border: 1px solid #666;
+      border-radius: 4px;
+      background: #444;
+      color: #ddd;
+    }
+    #gameCanvas {
+      margin-top: 10px;
+    }
+    .pieceBlock {
+      position: absolute;
+      border: 1px solid #444;
+      background: #000; /* Black background behind emojis */
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+      font-size: 16px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    .colorIndicator {
+      position: absolute;
+      width: 25%;
+      height: 25%;
+    }
+    .topLeft {
+      left: 0;
+      top: 0;
+      border-bottom-right-radius: 100%;
+    }
+    .topRight {
+      right: 0;
+      top: 0;
+      border-bottom-left-radius: 100%;
+    }
+    .bottomLeft {
+      left: 0;
+      bottom: 0;
+      border-top-right-radius: 100%;
+    }
+    .bottomRight {
+      right: 0;
+      bottom: 0;
+      border-top-left-radius: 100%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Emoji Icon Crush</h1>
+
+  <!-- Simple form to pick or enter custom emojis/icons -->
+  <div id="emojiSelection">
+    <div class="emojiField">
+      <label for="emoji1">Emoji / Icon #1</label>
+      <input type="text" id="emoji1" value="🇺🇸" maxlength="2">
+    </div>
+    <div class="emojiField">
+      <label for="emoji2">Emoji / Icon #2</label>
+      <input type="text" id="emoji2" value="🗽" maxlength="2">
+    </div>
+    <div class="emojiField">
+      <label for="emoji3">Emoji / Icon #3</label>
+      <input type="text" id="emoji3" value="🚀" maxlength="2">
+    </div>
+    <div class="emojiField">
+      <label for="emoji4">Emoji / Icon #4</label>
+      <input type="text" id="emoji4" value="🎪" maxlength="2">
+    </div>
+    <div class="emojiField">
+      <label for="emoji5">Emoji / Icon #5</label>
+      <input type="text" id="emoji5" value="🤸‍♀️">
+    </div>
+    <div class="emojiField">
+      <label for="emoji6">Emoji / Icon #6</label>
+      <input type="text" id="emoji6" value="🐉">
+    </div>
+  </div>
+
+  <canvas id="gameCanvas" width="300" height="600"></canvas>
+
+  <div id="controls">
+    <button id="startPauseBtn">Start Game</button>
+    <button id="restartBtn">Restart</button>
+    <button id="updateEmojisBtn">Update Emojis</button>
+  </div>
+
+  <!-- Add audio elements or oscillator-based placeholders for game sounds -->
+  <audio id="moveSound" preload="auto"></audio>
+  <audio id="rotateSound" preload="auto"></audio>
+  <audio id="dropSound" preload="auto"></audio>
+  <audio id="clearSound" preload="auto"></audio>
+  <audio id="gameOverSound" preload="auto"></audio>
+
+  <div id="info">
+    <p>
+      Arrow keys to move/rotate. Each tetromino block shows one of the selected emojis (or icons).
+      When 3+ same emojis connect (horizontal or vertical), they vanish (Candy Crush style).
+      Score combos by setting off chain reactions!
+    </p>
+  </div>
+
+  <script>
+    /************************************************************
+     * 1. BASIC SOUND SETUP AND UTILITY
+     ************************************************************/
+    let soundEnabled = true;    
+    const moveSound = document.getElementById('moveSound');
+    const rotateSound = document.getElementById('rotateSound');
+    const dropSound = document.getElementById('dropSound');
+    const clearSound = document.getElementById('clearSound');
+    const gameOverSound = document.getElementById('gameOverSound');
+    
+    function playSound(sound) {
+      if (!soundEnabled) return;
+      // For simplicity, no actual audio source is set.
+      // Implement real sounds or oscillator-based tones if desired.
+      console.log("Sound triggered:", sound.id);
+    }
+
+    /************************************************************
+     * 2. GAME SETUP
+     ************************************************************/
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startPauseBtn = document.getElementById("startPauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const updateEmojisBtn = document.getElementById("updateEmojisBtn");
+
+    // Emoji inputs
+    const emojiFields = [
+      document.getElementById('emoji1'), document.getElementById('emoji2'),
+      document.getElementById('emoji3'), document.getElementById('emoji4'),
+      document.getElementById('emoji5'), document.getElementById('emoji6')
+    ];
+    let emojis = emojiFields.map(field => field.value.trim() || '❓');
+
+    let COLS = 10;
+    let ROWS = 20;
+    let BLOCK_SIZE = 30;
+    canvas.width = COLS * BLOCK_SIZE;
+    canvas.height = ROWS * BLOCK_SIZE;
+
+    let board = [];
+    let currentPiece = null;
+    let currentPos = { row: 0, col: 4 };
+    let dropCounter = 0;
+    let dropInterval = 1000;
+    let lastTime = 0;
+    let score = 0;
+    let isGameActive = false;
+    let isPaused = false;
+
+    // Tetris shapes (tetrominoes), each shape is an array of [row, col] coords
+    const SHAPES = [
+      [[0,0],[0,1],[1,0],[1,1]],       // O
+      [[0,1],[1,1],[2,1],[2,0]],       // L mirrored
+      [[0,0],[1,0],[2,0],[2,1]],       // L
+      [[0,0],[0,1],[1,1],[1,2]],       // S
+      [[1,0],[1,1],[0,1],[0,2]],       // Z
+      [[0,1],[1,0],[1,1],[2,1]],       // T
+      [[0,0],[1,0],[2,0],[3,0]]        // I
+    ];
+
+    // Set a random emoji from the selected set
+    function getRandomEmoji() {
+      return emojis[Math.floor(Math.random() * emojis.length)];
+    }
+
+    // Create a new piece with random shape and random emojis
+    function createPiece() {
+      const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+      const shapeCoords = JSON.parse(JSON.stringify(SHAPES[shapeIndex]));
+
+      // For each block in the shape, store the chosen emoji
+      const pieceData = shapeCoords.map(() => ({
+        // We'll store the emoji as a string
+        emoji: getRandomEmoji()
+      }));
+
+      pieceData.shapeCoords = shapeCoords;
+      return pieceData;
+    }
+
+    // Return absolute positions of each block
+    function getPieceShape(piece) {
+      return piece.shapeCoords.map(coord => ({
+        row: coord[0] + currentPos.row,
+        col: coord[1] + currentPos.col
+      }));
+    }
+
+    function spawnPiece() {
+      currentPiece = createPiece();
+      currentPos.row = 0;
+      currentPos.col = Math.floor((COLS - 4) / 2);
+
+      // If it immediately collides, game over
+      if (collides(0, 0, currentPiece)) {
+        gameOver();
+      }
+    }
+
+    function collides(offsetRow, offsetCol, piece) {
+      const shape = getPieceShape(piece);
+      for (let i = 0; i < shape.length; i++) {
+        const r = shape[i].row + offsetRow;
+        const c = shape[i].col + offsetCol;
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
+          return true;
+        }
+        if (board[r] && board[r][c]) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function mergePiece() {
+      const shape = getPieceShape(currentPiece);
+      for (let i = 0; i < shape.length; i++) {
+        const { row, col } = shape[i];
+        if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
+          board[row][col] = {
+            emoji: currentPiece[i].emoji
+          };
+        }
+      }
+      
+      playSound(dropSound);
+      clearLines();
+      checkMatches();
+    }
+
+    // Traditional Tetris row clearing
+    function clearLines() {
+      let linesCleared = 0;
+      for (let r = ROWS - 1; r >= 0; r--) {
+        let filled = true;
+        for (let c = 0; c < COLS; c++) {
+          if (!board[r][c]) {
+            filled = false;
+            break;
+          }
+        }
+        if (filled) {
+          linesCleared++;
+          // Remove line
+          for (let c = 0; c < COLS; c++) {
+            board[r][c] = null;
+          }
+          // Shift all above rows down
+          for (let yy = r; yy > 0; yy--) {
+            for (let cc = 0; cc < COLS; cc++) {
+              board[yy][cc] = board[yy - 1][cc];
+            }
+          }
+          // Clear top row
+          for (let cc = 0; cc < COLS; cc++) {
+            board[0][cc] = null;
+          }
+          r++;
+        }
+      }
+      if (linesCleared > 0) {
+        playSound(clearSound);
+        const linePoints = [0, 100, 300, 500, 800]; // Up to 4 lines
+        score += linePoints[Math.min(linesCleared, 4)];
+      }
+    }
+
+    // Check for candy-crush style matches of >= 3 identical emojis
+    function checkMatches() {
+      let toRemove = [];
+      // Horizontal
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS - 2; c++) {
+          const cell1 = board[r][c];
+          const cell2 = board[r][c + 1];
+          const cell3 = board[r][c + 2];
+          if (cell1 && cell2 && cell3) {
+            if (cell1.emoji === cell2.emoji && cell2.emoji === cell3.emoji) {
+              toRemove.push([r, c], [r, c + 1], [r, c + 2]);
+            }
+          }
+        }
+      }
+      // Vertical
+      for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r < ROWS - 2; r++) {
+          const cell1 = board[r][c];
+          const cell2 = board[r + 1][c];
+          const cell3 = board[r + 2][c];
+          if (cell1 && cell2 && cell3) {
+            if (cell1.emoji === cell2.emoji && cell2.emoji === cell3.emoji) {
+              toRemove.push([r, c], [r + 1, c], [r + 2, c]);
+            }
+          }
+        }
+      }
+      // Remove duplicates
+      const uniqueRemovals = [];
+      for (const pos of toRemove) {
+        if (!uniqueRemovals.some(u => u[0] === pos[0] && u[1] === pos[1])) {
+          uniqueRemovals.push(pos);
+        }
+      }
+      // Clear them
+      if (uniqueRemovals.length > 0) {
+        for (const [rr, cc] of uniqueRemovals) {
+          board[rr][cc] = null;
+        }
+        playSound(clearSound);
+        score += uniqueRemovals.length * 10;
+        applyGravity();
+        // Chain combos
+        checkMatches();
+      }
+    }
+
+    function applyGravity() {
+      for (let c = 0; c < COLS; c++) {
+        for (let r = ROWS - 1; r >= 0; r--) {
+          if (!board[r][c]) {
+            let rr = r - 1;
+            while (rr >= 0 && !board[rr][c]) rr--;
+            if (rr >= 0) {
+              board[r][c] = board[rr][c];
+              board[rr][c] = null;
+            }
+          }
+        }
+      }
+    }
+
+    function drop() {
+      if (!collides(1, 0, currentPiece)) {
+        currentPos.row++;
+      } else {
+        mergePiece();
+        spawnPiece();
+      }
+      dropCounter = 0;
+    }
+
+    function rotatePiece() {
+      const shape = currentPiece.shapeCoords;
+      const pivot = shape[0];
+      for (let i = 1; i < shape.length; i++) {
+        const r = shape[i][0] - pivot[0];
+        const c = shape[i][1] - pivot[1];
+        // Rotate 90°
+        const newR = c;
+        const newC = -r;
+        shape[i][0] = pivot[0] + newR;
+        shape[i][1] = pivot[1] + newC;
+      }
+      // Check collision
+      if (collides(0, 0, currentPiece)) {
+        // Rotate back
+        for (let i = 1; i < shape.length; i++) {
+          const r = shape[i][0] - pivot[0];
+          const c = shape[i][1] - pivot[1];
+          // Rotate -90°
+          const oldR = -c;
+          const oldC = r;
+          shape[i][0] = pivot[0] + oldR;
+          shape[i][1] = pivot[1] + oldC;
+        }
+      }
+    }
+
+    /************************************************************
+     * 3. DRAWING
+     ************************************************************/
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Grid lines
+      ctx.strokeStyle = "#333";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        }
+      }
+
+      // Draw placed blocks
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = board[r][c];
+          if (cell) {
+            drawCell(c, r, cell.emoji);
+          }
+        }
+      }
+
+      // Draw current piece
+      if (currentPiece) {
+        const shape = getPieceShape(currentPiece);
+        for (let i = 0; i < shape.length; i++) {
+          const { row, col } = shape[i];
+          if (row < 0) continue; // skip off-screen
+          drawCell(col, row, currentPiece[i].emoji);
+        }
+      }
+
+      // Draw score
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}`, 10, 25);
+
+      // If paused
+      if (isPaused) {
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("PAUSED", canvas.width / 2, canvas.height / 2);
+      }
+    }
+
+    function drawCell(col, row, emojiChar) {
+      // Draw black square
+      ctx.fillStyle = "#000";
+      ctx.fillRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+
+      // Draw the emoji (centered)
+      ctx.fillStyle = "#fff";
+      const fontSize = Math.floor(BLOCK_SIZE * 0.75);
+      ctx.font = `${fontSize}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const xCenter = col * BLOCK_SIZE + BLOCK_SIZE / 2;
+      const yCenter = row * BLOCK_SIZE + BLOCK_SIZE / 2;
+      ctx.fillText(emojiChar, xCenter, yCenter);
+
+      // Draw color indicators in corners
+      ctx.fillStyle = "#ff5555";
+      // top-left
+      ctx.beginPath();
+      ctx.moveTo(col * BLOCK_SIZE, row * BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE * 0.25, row * BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE * 0.25);
+      ctx.fill();
+
+      // top-right
+      ctx.fillStyle = "#55ff55";
+      ctx.beginPath();
+      ctx.moveTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row * BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE * 0.25);
+      ctx.fill();
+
+      // bottom-left
+      ctx.fillStyle = "#5555ff";
+      ctx.beginPath();
+      ctx.moveTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE * 0.25, row * BLOCK_SIZE + BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+      ctx.fill();
+
+      // bottom-right
+      ctx.fillStyle = "#ffff55";
+      ctx.beginPath();
+      ctx.moveTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row * BLOCK_SIZE + BLOCK_SIZE);
+      ctx.lineTo(col * BLOCK_SIZE + BLOCK_SIZE, row * BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+      ctx.fill();
+
+      ctx.strokeStyle = "#222";
+      ctx.strokeRect(col * BLOCK_SIZE, row * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+    }
+
+    /************************************************************
+     * 4. GAME LOOP + PAUSE/OVER
+     ************************************************************/
+    function update(time = 0) {
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      if (isGameActive && !isPaused) {
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+          drop();
+        }
+      }
+      drawBoard();
+      requestAnimationFrame(update);
+    }
+
+    function resetGame() {
+      board = [];
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = Array(COLS).fill(null);
+      }
+      score = 0;
+      isGameActive = true;
+      isPaused = false;
+      startPauseBtn.textContent = "Pause Game";
+      spawnPiece();
+    }
+
+    function gameOver() {
+      isGameActive = false;
+      startPauseBtn.textContent = "Start Game";
+      playSound(gameOverSound);
+      animateGameOver();
+    }
+
+    // Animated overlay for game over
+    function animateGameOver() {
+      let alpha = 0;
+      let textScale = 0.5;
+      let finalAlpha = 0.8;
+
+      function animateFrame() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawBoard();
+
+        if (alpha < finalAlpha) {
+          alpha += 0.03;
+        } else {
+          alpha = finalAlpha;
+        }
+        if (textScale < 1) {
+          textScale += 0.03;
+        } else {
+          textScale = 1;
+          const pulse = 0.1 * Math.sin(Date.now() / 200) + 1;
+          textScale *= pulse;
+        }
+
+        ctx.fillStyle = `rgba(0,0,0,${alpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = "#f00";
+        ctx.fillStyle = "#fff";
+        ctx.textAlign = "center";
+
+        ctx.font = `${Math.floor(24 * textScale)}px Arial`;
+        ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 15);
+
+        ctx.font = `${Math.floor(20 * textScale)}px Arial`;
+        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2 + 30);
+
+        if (alpha >= finalAlpha) {
+          const blinkRate = Math.sin(Date.now() / 400) > 0 ? 1 : 0.2;
+          ctx.fillStyle = `rgba(255, 255, 255, ${blinkRate})`;
+          ctx.font = "16px Arial";
+          ctx.fillText("Press 'Restart' to play again", canvas.width / 2, canvas.height / 2 + 70);
+        }
+        ctx.shadowBlur = 0;
+
+        if (!isGameActive) requestAnimationFrame(animateFrame);
+      }
+      animateFrame();
+    }
+
+    // Start the animation loop
+    function startLogic() {
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = Array(COLS).fill(null);
+      }
+      drawBoard();
+      update();
+    }
+
+    /************************************************************
+     * 5. EVENT LISTENERS + CONTROLS
+     ************************************************************/
+    document.addEventListener("keydown", e => {
+      if (!isGameActive || isPaused || !currentPiece) return;
+      switch (e.key) {
+        case "ArrowLeft":
+          if (!collides(0, -1, currentPiece)) {
+            currentPos.col--;
+            playSound(moveSound);
+          }
+          break;
+        case "ArrowRight":
+          if (!collides(0, 1, currentPiece)) {
+            currentPos.col++;
+            playSound(moveSound);
+          }
+          break;
+        case "ArrowDown":
+          drop();
+          break;
+        case "ArrowUp":
+          rotatePiece();
+          playSound(rotateSound);
+          break;
+        case " ":
+        case "p":
+          togglePause();
+          break;
+        case "m":
+          soundEnabled = !soundEnabled;
+          break;
+      }
+    });
+
+    function togglePause() {
+      if (!isGameActive) {
+        resetGame();
+      } else {
+        isPaused = !isPaused;
+        startPauseBtn.textContent = isPaused ? "Resume Game" : "Pause Game";
+      }
+    }
+
+    startPauseBtn.addEventListener("click", togglePause);
+    restartBtn.addEventListener("click", resetGame);
+
+    // Update the emojis array from input fields
+    updateEmojisBtn.addEventListener("click", () => {
+      emojis = emojiFields.map(field => field.value.trim() || '❓');
+      alert("Emojis updated! Future pieces will use the new emoji set.");
+    });
+
+    // Touch controls for mobile, preventing scrolling
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchMoved = false;
+    const SWIPE_THRESHOLD = 30;
+
+    document.addEventListener('touchstart', e => {
+      if (!isGameActive || isPaused || !currentPiece) return;
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        e.preventDefault();
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+        touchMoved = false;
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', e => {
+      if (!isGameActive || isPaused || !currentPiece) return;
+      const touch = e.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        e.preventDefault();
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+          touchMoved = true;
+        }
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchend', e => {
+      if (!isGameActive || isPaused || !currentPiece) return;
+      const touch = e.changedTouches[0];
+      const rect = canvas.getBoundingClientRect();
+      if (touch.clientY >= rect.top && touch.clientY <= rect.bottom) {
+        const deltaX = touch.clientX - touchStartX;
+        const deltaY = touch.clientY - touchStartY;
+        if (!touchMoved) {
+          // Tap => accelerate block down
+          drop();
+        } else {
+          if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // Horizontal
+            if (deltaX > SWIPE_THRESHOLD) {
+              // Right
+              if (!collides(0, 1, currentPiece)) {
+                currentPos.col++;
+                playSound(moveSound);
+              }
+            } else if (deltaX < -SWIPE_THRESHOLD) {
+              // Left
+              if (!collides(0, -1, currentPiece)) {
+                currentPos.col--;
+                playSound(moveSound);
+              }
+            }
+          } else {
+            // Vertical
+            if (deltaY > SWIPE_THRESHOLD) {
+              // Down
+              drop();
+            } else if (deltaY < -SWIPE_THRESHOLD) {
+              // Up
+              rotatePiece();
+              playSound(rotateSound);
+            }
+          }
+        }
+      }
+    });
+
+    // Prevent zooming on mobile
+    const meta = document.createElement('meta');
+    meta.name = "viewport";
+    meta.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+    document.head.appendChild(meta);
+
+    // Initialize
+    function init() {
+      // Initialize empty board
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = Array(COLS).fill(null);
+      }
+      drawBoard();
+      startLogic();
+    }
+
+    init();
+  </script>
+</body>
+</html>
