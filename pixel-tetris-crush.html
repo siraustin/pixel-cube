@@ -1160,14 +1160,81 @@
       // Play game over sound
       playSound(gameOverSound);
       
-      // Draw game over message
-      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = "#fff";
-      ctx.font = "24px Arial";
-      ctx.textAlign = "center";
-      ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 15);
-      ctx.fillText(`Score: ${score}`, canvas.width/2, canvas.height/2 + 15);
+      // Start the game over animation
+      animateGameOver();
+    }
+    
+    // Animated game over sequence
+    function animateGameOver() {
+      let alpha = 0;
+      let textScale = 0.5;
+      let finalAlpha = 0.8;
+      let animationDone = false;
+      
+      // Create a recurring animation frame
+      function animateFrame() {
+        // Clear the animation area
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Redraw the board with frozen blocks
+        drawBoard();
+        
+        // Increment alpha for fade-in
+        if (alpha < finalAlpha) {
+          alpha += 0.03;
+        } else {
+          alpha = finalAlpha;
+        }
+        
+        // Grow text size
+        if (textScale < 1) {
+          textScale += 0.03;
+        } else {
+          textScale = 1;
+          
+          // Pulse the text once it's at full size
+          const pulseFactor = 0.1 * Math.sin(Date.now() / 200) + 1;
+          textScale = textScale * pulseFactor;
+        }
+        
+        // Draw darkened background
+        ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw glow around text
+        const glowSize = 15;
+        ctx.shadowBlur = glowSize;
+        ctx.shadowColor = "#ff0000";
+        
+        // Draw game over text with animation
+        ctx.fillStyle = "#fff";
+        ctx.font = `${Math.floor(24 * textScale)}px Arial`;
+        ctx.textAlign = "center";
+        ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 15);
+        
+        // Draw score
+        ctx.font = `${Math.floor(20 * textScale)}px Arial`;
+        ctx.fillText(`Score: ${score}`, canvas.width/2, canvas.height/2 + 30);
+        
+        // Add a hint to restart
+        if (alpha >= finalAlpha) {
+          const blinkRate = Math.sin(Date.now() / 400) > 0 ? 1 : 0.2;
+          ctx.fillStyle = `rgba(255, 255, 255, ${blinkRate})`;
+          ctx.font = "16px Arial";
+          ctx.fillText("Press 'Restart' to play again", canvas.width/2, canvas.height/2 + 70);
+        }
+        
+        // Reset shadow for next frame
+        ctx.shadowBlur = 0;
+        
+        // Continue animation
+        if (!isGameActive) {
+          requestAnimationFrame(animateFrame);
+        }
+      }
+      
+      // Start the animation sequence
+      animateFrame();
     }
 
     /************************************************************
