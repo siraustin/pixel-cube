@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pixel Tetris Crush</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #333;
+      color: #ddd;
+      font-family: sans-serif;
+      text-align: center;
+    }
+    canvas {
+      background: #000;
+      display: block;
+      margin: 0;
+      border: 2px solid #555;
+    }
+    #info {
+      margin: 10px auto;
+      width: 400px;
+      font-size: 14px;
+      line-height: 1.6em;
+    }
+    #controls {
+      margin: 10px auto;
+      width: 400px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 15px;
+      background: #555;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #777;
+    }
+    .slider-container {
+      margin: 10px auto;
+      width: 350px;
+      text-align: left;
+    }
+    #headerArea {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 20px;
+      margin: 0 auto 20px;
+      max-width: 800px;
+    }
+    #webcamContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 150px;
+    }
+    #webcamPreview {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto 10px;
+      border: 1px solid #555;
+      display: none;
+    }
+    #piecePreviewContainer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 150px;
+    }
+    #piecePreview {
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 10px;
+      background: #000;
+      border: 2px solid #555;
+      position: relative;
+    }
+    .pieceBlock {
+      position: absolute;
+      border: 1px solid #444;
+      background: #222;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    .colorIndicator {
+      position: absolute;
+      width: 25%;
+      height: 25%;
+    }
+    .topLeft {
+      left: 0;
+      top: 0;
+      border-bottom-right-radius: 100%;
+    }
+    .topRight {
+      right: 0;
+      top: 0;
+      border-bottom-left-radius: 100%;
+    }
+    .bottomLeft {
+      left: 0;
+      bottom: 0;
+      border-top-right-radius: 100%;
+    }
+    .bottomRight {
+      right: 0;
+      bottom: 0;
+      border-top-left-radius: 100%;
+    }
+    .legend {
+      margin: 10px auto;
+      width: 400px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .legendItem {
+      display: flex;
+      align-items: center;
+      margin: 0 5px;
+    }
+    .legendColor {
+      width: 16px;
+      height: 16px;
+      margin-right: 5px;
+      display: inline-block;
+    }
+    #nextPieceText, #webcamText {
+      margin-top: 5px;
+      font-size: 14px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pixel Tetris Crush</h1>
+  
+  <div id="headerArea">
+    <div id="webcamContainer">
+      <canvas id="webcamPreview"></canvas>
+      <div id="webcamText">Camera View</div>
+      <button id="startCamera">Enable Webcam</button>
+    </div>
+    
+    <div id="piecePreviewContainer">
+      <div id="piecePreview"></div>
+      <div id="nextPieceText">Next Piece</div>
+    </div>
+  </div>
+  
+  <!-- Add audio elements for game sounds -->
+  <audio id="moveSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+  <audio id="rotateSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+  <audio id="dropSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+  <audio id="clearSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+  <audio id="gameOverSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+  
+  <canvas id="gameCanvas" width="300" height="600" style="margin: 0 auto;"></canvas>
+  
+  <div id="controls">
+    <button id="startPauseBtn">Start Game</button>
+    <button id="restartBtn">Restart</button>
+  </div>
+  
+  <div class="slider-container">
+    <label for="gridSizeSlider">Block Size: <span id="gridSizeValue">30</span>px</label>
+    <input type="range" id="gridSizeSlider" min="10" max="50" value="30">
+  </div>
+  
+  <div class="slider-container">
+    <label for="pixelSizeSlider">Pixelation: <span id="pixelValue">10</span>px</label>
+    <input type="range" id="pixelSizeSlider" min="3" max="20" value="10">
+  </div>
+  
+  <div id="info">
+    <p>
+      Arrow keys to move/rotate. Each tetromino block uses pixelated webcam images.
+      When 3+ same-colored blocks connect (horizontal or vertical), they vanish (Candy Crush style).
+      Score combos by setting off chain reactions!
+    </p>
+  </div>
+
+  <script>
+    /************************************************************
+     * 1. WEBCAM INITIALIZATION AND PIXELATION
+     ************************************************************/
+    const video = document.createElement('video');
+    video.autoplay = true;
+    video.muted = true;
+    video.playsInline = true;
+    
+    const webcamPreview = document.getElementById('webcamPreview');
+    const webcamCtx = webcamPreview.getContext('2d', { willReadFrequently: true });
+    webcamPreview.width = 120;
+    webcamPreview.height = 120;
+    
+    const piecePreview = document.getElementById('piecePreview');
+    const startCameraBtn = document.getElementById('startCamera');
+    const pixelSizeSlider = document.getElementById('pixelSizeSlider');
+    const pixelValue = document.getElementById('pixelValue');
+    const nextPieceText = document.getElementById('nextPieceText');
+    const webcamText = document.getElementById('webcamText');
+    
+    // Sound elements
+    const moveSound = document.getElementById('moveSound');
+    const rotateSound = document.getElementById('rotateSound');
+    const dropSound = document.getElementById('dropSound');
+    const clearSound = document.getElementById('clearSound');
+    const gameOverSound = document.getElementById('gameOverSound');
+    
+    let soundEnabled = true;
+    
+    // Function to play sounds
+    function playSound(sound) {
+      if (soundEnabled) {
+        // Clone the sound to allow overlapping plays
+        const soundClone = sound.cloneNode();
+        soundClone.volume = 0.5; // Adjust volume as needed
+        soundClone.play().catch(e => console.log("Audio play prevented:", e));
+      }
+    }
+    
+    // Create oscillator-based sounds (no external files needed)
+    function createOscillatorSound(audioContext, type, frequency, duration, volume = 0.5) {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      
+      // Add fade out to avoid clicks
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      oscillator.start();
+      oscillator.stop(audioContext.currentTime + duration);
+    }
+    
+    // Generate sound effects
+    function generateSoundEffects() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Override the playSound function to use generated sounds
+        window.playSound = function(soundType) {
+          if (!soundEnabled) return;
+          
+          switch(soundType) {
+            case moveSound:
+              createOscillatorSound(audioContext, 'sine', 220, 0.1, 0.2);
+              break;
+            case rotateSound:
+              createOscillatorSound(audioContext, 'square', 330, 0.15, 0.2);
+              break;
+            case dropSound:
+              createOscillatorSound(audioContext, 'sawtooth', 180, 0.2, 0.3);
+              break;
+            case clearSound:
+              // Play a rising tone for line clear
+              const osc = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(220, audioContext.currentTime);
+              osc.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.3);
+              gain.gain.setValueAtTime(0.4, audioContext.currentTime);
+              gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.4);
+              osc.connect(gain);
+              gain.connect(audioContext.destination);
+              osc.start();
+              osc.stop(audioContext.currentTime + 0.4);
+              break;
+            case gameOverSound:
+              // Play a series of descending tones for game over
+              for (let i = 0; i < 4; i++) {
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(220 - (i * 20), audioContext.currentTime + (i * 0.2));
+                gain.gain.setValueAtTime(0.4, audioContext.currentTime + (i * 0.2));
+                gain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + (i * 0.2) + 0.3);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start(audioContext.currentTime + (i * 0.2));
+                osc.stop(audioContext.currentTime + (i * 0.2) + 0.3);
+              }
+              break;
+          }
+        };
+        
+      } catch (e) {
+        console.log("Web Audio API not supported, using fallback sounds:", e);
+      }
+    }
+    
+    // Initialize sound effects
+    generateSoundEffects();
+    
+    let currentStream = null;
+    let currentFacingMode = 'user';
+    let isGeneratingPiece = false;
+    
+    // Pre-create reusable canvases for better performance
+    const pixelCanvas = document.createElement('canvas');
+    const pixelCtx = pixelCanvas.getContext('2d', { willReadFrequently: true });
+    pixelCanvas.width = 30;
+    pixelCanvas.height = 30;
+    
+    // Create a texture cache to prevent regenerating textures constantly
+    const textureCache = new Map();
+    
+    // Initialize webcam
+    async function initWebcam() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error('WebRTC API not supported in this browser');
+        }
+
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: currentFacingMode,
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          } 
+        });
+
+        currentStream = stream;
+        video.srcObject = stream;
+        await video.play();
+        
+        // Show webcam preview
+        webcamPreview.style.display = 'block';
+        startCameraBtn.textContent = 'Switch Camera';
+        
+        // Start webcam preview update
+        updateWebcamPreview();
+        
+        // Initialize the next piece preview
+        startGeneratingNextPiece();
+        
+      } catch (error) {
+        console.error('Error accessing webcam:', error);
+        alert('Could not access webcam. Please check permissions.');
+      }
+    }
+    
+    // Switch between front and rear cameras
+    async function switchCamera() {
+      currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+      
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop());
+      }
+      
+      try {
+        currentStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+
+        video.srcObject = currentStream;
+        await video.play();
+        
+      } catch (err) {
+        console.error('Error switching camera:', err);
+      }
+    }
+    
+    // Update webcam preview with pixelation - completely rewritten to avoid flickering
+    function updateWebcamPreview() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        const pixelSize = parseInt(pixelSizeSlider.value); // Use slider value
+        
+        // Clear the canvas
+        webcamCtx.clearRect(0, 0, webcamPreview.width, webcamPreview.height);
+        
+        // Calculate dimensions - Use the pixelation slider to control effect intensity
+        const w = webcamPreview.width;
+        const h = webcamPreview.height;
+        const GRID_SIZE = Math.max(5, 30 - pixelSize); // Inverse relationship: lower slider = more pixels
+        const pixelWidth = w / GRID_SIZE;
+        const pixelHeight = h / GRID_SIZE;
+        
+        // Draw video first to sample colors
+        webcamCtx.drawImage(video, 0, 0, w, h);
+        
+        // Get image data for color sampling
+        const imgData = webcamCtx.getImageData(0, 0, w, h);
+        
+        // Clear canvas to draw pixelated version
+        webcamCtx.clearRect(0, 0, w, h);
+        
+        // Draw pixelated version
+        for (let y = 0; y < GRID_SIZE; y++) {
+          for (let x = 0; x < GRID_SIZE; x++) {
+            // Calculate the position in the source image data
+            const sourceX = Math.floor(x * pixelWidth);
+            const sourceY = Math.floor(y * pixelHeight);
+            
+            // Get pixel color from image data
+            const pixelIndex = (sourceY * w + sourceX) * 4;
+            const r = imgData.data[pixelIndex];
+            const g = imgData.data[pixelIndex + 1];
+            const b = imgData.data[pixelIndex + 2];
+            
+            // Draw rectangle with this color
+            webcamCtx.fillStyle = `rgb(${r},${g},${b})`;
+            webcamCtx.fillRect(
+              x * pixelWidth, 
+              y * pixelHeight, 
+              pixelWidth, 
+              pixelHeight
+            );
+          }
+        }
+      }
+      
+      // Continue updating
+      requestAnimationFrame(updateWebcamPreview);
+    }
+    
+    // Get pixelated webcam frame - completely rewritten for better performance
+    function getPixelatedTexture() {
+      if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+        // Fallback to random color if webcam is not available
+        return { color: getRandomColor() };
+      }
+      
+      // Use slider value for pixelation
+      const pixelSize = parseInt(pixelSizeSlider.value);
+      
+      // Reuse cached texture if possible - include pixelSize in cache key
+      const cacheKey = `${pixelSize}_${Date.now() % 20}`; // Simple cache key for some variety
+      if (textureCache.has(cacheKey)) {
+        return textureCache.get(cacheKey);
+      }
+      
+      // Clear the pixelation canvas
+      pixelCanvas.width = BLOCK_SIZE;
+      pixelCanvas.height = BLOCK_SIZE;
+      
+      // Draw the ENTIRE video frame to the texture canvas (not just a random region)
+      pixelCtx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, BLOCK_SIZE, BLOCK_SIZE);
+      
+      // Get image data once to sample colors
+      const imgData = pixelCtx.getImageData(0, 0, BLOCK_SIZE, BLOCK_SIZE);
+      
+      // Clear canvas before drawing pixelated version
+      pixelCtx.clearRect(0, 0, BLOCK_SIZE, BLOCK_SIZE);
+      
+      let avgR = 0, avgG = 0, avgB = 0;
+      let sampleCount = 0;
+      
+      // Use same variable pixelation calculation as webcam preview
+      const GRID_SIZE = Math.max(5, 30 - pixelSize); // Inverse relationship: lower slider = more pixels
+      const pixelWidth = BLOCK_SIZE / GRID_SIZE;
+      const pixelHeight = BLOCK_SIZE / GRID_SIZE;
+      
+      // Draw pixelated version
+      for (let y = 0; y < GRID_SIZE; y++) {
+        for (let x = 0; x < GRID_SIZE; x++) {
+          // Calculate the position in the source image data
+          const sourceX = Math.floor(x * pixelWidth);
+          const sourceY = Math.floor(y * pixelHeight);
+          
+          // Calculate pixel index in the image data
+          const pixelIndex = (sourceY * BLOCK_SIZE + sourceX) * 4;
+          
+          // Get pixel color
+          const r = imgData.data[pixelIndex] || 0;
+          const g = imgData.data[pixelIndex + 1] || 0;
+          const b = imgData.data[pixelIndex + 2] || 0;
+          
+          // Add to average color calculation
+          avgR += r;
+          avgG += g;
+          avgB += b;
+          sampleCount++;
+          
+          // Draw rectangle with this color
+          pixelCtx.fillStyle = `rgb(${r},${g},${b})`;
+          pixelCtx.fillRect(
+            x * pixelWidth, 
+            y * pixelHeight,
+            pixelWidth,
+            pixelHeight
+          );
+        }
+      }
+      
+      // Calculate average color for the entire texture
+      avgR = Math.floor(avgR / sampleCount);
+      avgG = Math.floor(avgG / sampleCount);
+      avgB = Math.floor(avgB / sampleCount);
+      
+      // Assign a random color instead of mapping to closest base color
+      // This ensures variety in block colors
+      const randomColor = getRandomColor();
+      
+      // Create a persistent copy of the canvas for the texture
+      const textureCanvas = document.createElement('canvas');
+      textureCanvas.width = BLOCK_SIZE;
+      textureCanvas.height = BLOCK_SIZE;
+      const textureCtx = textureCanvas.getContext('2d');
+      textureCtx.drawImage(pixelCanvas, 0, 0);
+      
+      // Store in cache
+      const result = {
+        canvas: textureCanvas,
+        color: randomColor // Use random color instead of mapped color
+      };
+      
+      textureCache.set(cacheKey, result);
+      
+      // Limit cache size
+      if (textureCache.size > 30) {
+        const oldestKey = textureCache.keys().next().value;
+        textureCache.delete(oldestKey);
+      }
+      
+      return result;
+    }
+    
+    // Map an RGB color to one of the base colors - function kept for reference
+    // but we're now using getRandomColor() directly for more variety
+    function mapToBaseColor(r, g, b) {
+      const colors = [
+        {color: "#ff0000", values: [255, 0, 0]},      // Red
+        {color: "#ff7700", values: [255, 119, 0]},    // Orange
+        {color: "#ffff00", values: [255, 255, 0]},    // Yellow
+        {color: "#00ff00", values: [0, 255, 0]},      // Green
+        {color: "#0000ff", values: [0, 0, 255]},      // Blue
+        {color: "#8a2be2", values: [138, 43, 226]}    // Violet
+      ];
+      
+      let closestColor = colors[0].color;
+      let closestDistance = Infinity;
+      
+      for (const colorObj of colors) {
+        const dr = r - colorObj.values[0];
+        const dg = g - colorObj.values[1];
+        const db = b - colorObj.values[2];
+        const distance = dr*dr + dg*dg + db*db;
+        
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestColor = colorObj.color;
+        }
+      }
+      
+      return closestColor;
+    }
+
+    /************************************************************
+     * 2. TETRIS + CANDY CRUSH COMBO LOGIC
+     ************************************************************/
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startPauseBtn = document.getElementById("startPauseBtn");
+    const restartBtn = document.getElementById("restartBtn");
+    const gridSizeSlider = document.getElementById("gridSizeSlider");
+    const gridSizeValue = document.getElementById("gridSizeValue");
+    
+    let COLS = 10;
+    let ROWS = 20;
+    let BLOCK_SIZE = parseInt(gridSizeSlider.value);
+    
+    // Adjust canvas size when grid size changes
+    function updateCanvasSize() {
+      BLOCK_SIZE = parseInt(gridSizeSlider.value);
+      gridSizeValue.textContent = BLOCK_SIZE;
+      
+      // Update canvas size
+      canvas.width = COLS * BLOCK_SIZE;
+      canvas.height = ROWS * BLOCK_SIZE;
+    }
+    
+    // Initialize canvas size
+    updateCanvasSize();
+    
+    // Game state
+    let board = [];
+    let currentPiece = null;
+    let currentPos = { row: 0, col: 4 };
+    let dropCounter = 0;
+    let dropInterval = 1000;
+    let lastTime = 0;
+    let score = 0;
+    let isGameActive = false;
+    let isPaused = false;
+    let colorPalette = ["#ff0000", "#ff7700", "#ffff00", "#00ff00", "#0000ff", "#8a2be2"];
+    
+    // Tetris shapes (tetrominoes)
+    const SHAPES = [
+      // Each shape is a list of [row, col] coords
+      [[0,0],[0,1],[1,0],[1,1]],       // O
+      [[0,1],[1,1],[2,1],[2,0]],       // L mirrored
+      [[0,0],[1,0],[2,0],[2,1]],       // L
+      [[0,0],[0,1],[1,1],[1,2]],       // S
+      [[1,0],[1,1],[0,1],[0,2]],       // Z
+      [[0,1],[1,0],[1,1],[2,1]],       // T
+      [[0,0],[1,0],[2,0],[3,0]]        // I
+    ];
+
+    function getRandomColor() {
+      return colorPalette[Math.floor(Math.random() * colorPalette.length)];
+    }
+
+    // New function to animate building a piece without pausing the game
+    async function animatePieceBuilding() {
+      if (!video.readyState === video.HAVE_ENOUGH_DATA) {
+        // If no webcam, just create a piece without animation
+        return createPiece();
+      }
+      
+      isGeneratingPiece = true;
+      piecePreview.style.display = 'block';
+      piecePreview.innerHTML = '';
+      nextPieceText.textContent = "Building piece...";
+      
+      // Get a random shape
+      const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+      const shape = JSON.parse(JSON.stringify(SHAPES[shapeIndex]));
+      
+      // Determine preview size and position
+      const blockSize = Math.min(30, BLOCK_SIZE); // Small preview blocks
+      const previewSize = piecePreview.offsetWidth;
+      
+      // Calculate bounding box of the shape
+      let minRow = 999, maxRow = -999, minCol = 999, maxCol = -999;
+      for (const [row, col] of shape) {
+        minRow = Math.min(minRow, row);
+        maxRow = Math.max(maxRow, row);
+        minCol = Math.min(minCol, col);
+        maxCol = Math.max(maxCol, col);
+      }
+      
+      const shapeWidth = (maxCol - minCol + 1) * blockSize;
+      const shapeHeight = (maxRow - minRow + 1) * blockSize;
+      
+      // Center the shape in the preview
+      const offsetX = (previewSize - shapeWidth) / 2;
+      const offsetY = (previewSize - shapeHeight) / 2;
+      
+      // Create empty piece data
+      const pieceData = shape.map(() => {
+        return {
+          texture: null,
+          color: null
+        };
+      });
+      
+      // Create preview blocks
+      const previewBlocks = [];
+      for (let i = 0; i < shape.length; i++) {
+        const block = document.createElement('div');
+        block.className = 'pieceBlock';
+        block.style.width = `${blockSize}px`;
+        block.style.height = `${blockSize}px`;
+        block.style.left = `${offsetX + (shape[i][1] - minCol) * blockSize}px`;
+        block.style.top = `${offsetY + (shape[i][0] - minRow) * blockSize}px`;
+        block.style.opacity = '0.3';
+        
+        piecePreview.appendChild(block);
+        previewBlocks.push(block);
+      }
+      
+      // Animate building each block
+      for (let i = 0; i < shape.length; i++) {
+        // Flash the block being built
+        previewBlocks[i].style.background = '#444';
+        previewBlocks[i].style.opacity = '1';
+        
+        // Capture and pixelate
+        await new Promise(resolve => setTimeout(resolve, 200)); // Short delay
+        
+        // Generate texture for this block
+        const texture = getPixelatedTexture();
+        pieceData[i].texture = texture.canvas;
+        pieceData[i].color = texture.color;
+        
+        // Show the captured texture
+        if (texture.canvas) {
+          // Create a copy of the texture canvas
+          const canvas = document.createElement('canvas');
+          canvas.width = texture.canvas.width;
+          canvas.height = texture.canvas.height;
+          canvas.getContext('2d').drawImage(texture.canvas, 0, 0);
+          
+          previewBlocks[i].style.backgroundImage = `url(${canvas.toDataURL()})`;
+          previewBlocks[i].style.backgroundSize = 'cover';
+          
+          // Add color indicators for all four corners
+          const colors = ['topLeft', 'topRight', 'bottomLeft', 'bottomRight'];
+          colors.forEach(pos => {
+            const indicator = document.createElement('div');
+            indicator.className = `colorIndicator ${pos}`;
+            indicator.style.backgroundColor = texture.color;
+            previewBlocks[i].appendChild(indicator);
+          });
+        } else {
+          previewBlocks[i].style.backgroundColor = texture.color;
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 200)); // Short delay
+      }
+      
+      // Short delay at the end
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Update next piece text
+      nextPieceText.textContent = "Next Piece";
+      
+      // Keep the preview visible - don't hide it
+      isGeneratingPiece = false;
+      
+      // Return the piece
+      const piece = pieceData;
+      piece.shapeCoords = shape;
+      return piece;
+    }
+    
+    // Start generating the next piece in the side panel
+    let nextPiece = null;
+    async function startGeneratingNextPiece() {
+      if (!nextPiece && video.readyState === video.HAVE_ENOUGH_DATA) {
+        nextPiece = await animatePieceBuilding();
+      }
+    }
+    
+    // Updated createPiece to use animatePieceBuilding when possible
+    function createPiece() {
+      const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+      // assign webcam textures to each cell
+      const piece = shape.map(() => {
+        const texture = video.readyState === video.HAVE_ENOUGH_DATA ? 
+                getPixelatedTexture() : 
+                { color: getRandomColor() };
+                
+        return { 
+          texture: texture.canvas || null,
+          color: texture.color
+        };
+      });
+      
+      // Add shape coords
+      const shapeIndex = Math.floor(Math.random() * SHAPES.length);
+      piece.shapeCoords = JSON.parse(JSON.stringify(SHAPES[shapeIndex]));
+      
+      return piece;
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw background grid
+      ctx.strokeStyle = "#333";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          ctx.strokeRect(c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        }
+      }
+      
+      // Draw existing board
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cell = board[r][c];
+          if (cell) {
+            if (cell.texture) {
+              // Draw using the cached canvas
+              ctx.drawImage(cell.texture, c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            } else {
+              // Fallback to color
+              ctx.fillStyle = cell.color;
+              ctx.fillRect(c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            }
+            
+            // Draw color indicators in all four corners
+            ctx.fillStyle = cell.color;
+            
+            // Top-left corner
+            ctx.beginPath();
+            ctx.moveTo(c*BLOCK_SIZE, r*BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE * 0.25, r*BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE * 0.25);
+            ctx.fill();
+            
+            // Top-right corner
+            ctx.beginPath();
+            ctx.moveTo(c*BLOCK_SIZE + BLOCK_SIZE, r*BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, r*BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE * 0.25);
+            ctx.fill();
+            
+            // Bottom-left corner
+            ctx.beginPath();
+            ctx.moveTo(c*BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE * 0.25, r*BLOCK_SIZE + BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+            ctx.fill();
+            
+            // Bottom-right corner
+            ctx.beginPath();
+            ctx.moveTo(c*BLOCK_SIZE + BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, r*BLOCK_SIZE + BLOCK_SIZE);
+            ctx.lineTo(c*BLOCK_SIZE + BLOCK_SIZE, r*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+            ctx.fill();
+            
+            ctx.strokeStyle = "#222";
+            ctx.strokeRect(c*BLOCK_SIZE, r*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+        }
+      }
+      
+      // Draw current piece
+      if (currentPiece) {
+        const shape = getPieceShape(currentPiece);
+        for (let i = 0; i < shape.length; i++) {
+          const { row, col } = shape[i];
+          if (row < 0) continue; // Don't draw off-screen pieces
+          
+          if (currentPiece[i].texture) {
+            // Draw using the cached canvas
+            ctx.drawImage(currentPiece[i].texture, col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          } else {
+            // Fallback to color
+            ctx.fillStyle = currentPiece[i].color;
+            ctx.fillRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+          
+          // Draw color indicators in all four corners
+          ctx.fillStyle = currentPiece[i].color;
+          
+          // Top-left corner
+          ctx.beginPath();
+          ctx.moveTo(col*BLOCK_SIZE, row*BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE * 0.25, row*BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE * 0.25);
+          ctx.fill();
+          
+          // Top-right corner
+          ctx.beginPath();
+          ctx.moveTo(col*BLOCK_SIZE + BLOCK_SIZE, row*BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row*BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE * 0.25);
+          ctx.fill();
+          
+          // Bottom-left corner
+          ctx.beginPath();
+          ctx.moveTo(col*BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE * 0.25, row*BLOCK_SIZE + BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+          ctx.fill();
+          
+          // Bottom-right corner
+          ctx.beginPath();
+          ctx.moveTo(col*BLOCK_SIZE + BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25, row*BLOCK_SIZE + BLOCK_SIZE);
+          ctx.lineTo(col*BLOCK_SIZE + BLOCK_SIZE, row*BLOCK_SIZE + BLOCK_SIZE - BLOCK_SIZE * 0.25);
+          ctx.fill();
+          
+          ctx.strokeStyle = "#fff";
+          ctx.strokeRect(col*BLOCK_SIZE, row*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+        }
+      }
+      
+      // Draw game status if paused
+      if (isPaused) {
+        ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#fff";
+        ctx.font = "24px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("PAUSED", canvas.width/2, canvas.height/2);
+      }
+      
+      // Draw score
+      ctx.fillStyle = "#fff";
+      ctx.font = "18px Arial";
+      ctx.textAlign = "left";
+      ctx.fillText(`Score: ${score}`, 10, 25);
+    }
+
+    function getPieceShape(piece) {
+      // piece.shapeCoords is now set in createPiece
+      return piece.shapeCoords.map((coord, i) => {
+        return {
+          row: coord[0] + currentPos.row,
+          col: coord[1] + currentPos.col
+        };
+      });
+    }
+
+    async function spawnPiece() {
+      // Use the next piece if available, otherwise create a new piece
+      if (nextPiece) {
+        currentPiece = nextPiece;
+        nextPiece = null;
+        // Start generating the next piece for upcoming turns
+        startGeneratingNextPiece();
+      } else {
+        // Create a piece immediately if none is available
+        currentPiece = createPiece();
+      }
+      
+      currentPos.row = 0;
+      currentPos.col = Math.floor((COLS - 4) / 2); // center horizontally
+      
+      // if it immediately collides, game over
+      if (collides(0, 0, currentPiece)) {
+        gameOver();
+      }
+    }
+
+    function collides(offsetRow, offsetCol, piece) {
+      const shape = getPieceShape(piece);
+      for (let i = 0; i < shape.length; i++) {
+        const r = shape[i].row + offsetRow;
+        const c = shape[i].col + offsetCol;
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS) {
+          return true;
+        }
+        if (board[r] && board[r][c]) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function mergePiece() {
+      const shape = getPieceShape(currentPiece);
+      for (let i = 0; i < shape.length; i++) {
+        const { row, col } = shape[i];
+        if (row >= 0 && row < ROWS && col >= 0 && col < COLS) {
+          board[row][col] = { 
+            color: currentPiece[i].color,
+            texture: currentPiece[i].texture
+          };
+        }
+      }
+      
+      // Play drop sound
+      playSound(dropSound);
+      
+      // check for matches (Candy Crush style)
+      checkMatches();
+    }
+
+    function rotatePiece() {
+      // basic 2D rotation for shape coords around the first block
+      const shape = currentPiece.shapeCoords;
+      const pivot = shape[0]; // pivot on the first block
+      for (let i = 1; i < shape.length; i++) {
+        const r = shape[i][0] - pivot[0];
+        const c = shape[i][1] - pivot[1];
+        // rotate 90 deg
+        const newR = c;
+        const newC = -r;
+        shape[i][0] = pivot[0] + newR;
+        shape[i][1] = pivot[1] + newC;
+      }
+      // if it collides, rotate back
+      if (collides(0, 0, currentPiece)) {
+        // rotate back
+        for (let i = 1; i < shape.length; i++) {
+          const r = shape[i][0] - pivot[0];
+          const c = shape[i][1] - pivot[1];
+          // rotate -90 deg
+          const oldR = -c;
+          const oldC = r;
+          shape[i][0] = pivot[0] + oldR;
+          shape[i][1] = pivot[1] + oldC;
+        }
+      }
+    }
+
+    function checkMatches() {
+      // find groups of >= 3 same color horizontally or vertically
+      let toRemove = [];
+      // horizontal matches
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS-2; c++) {
+          const cell1 = board[r][c];
+          const cell2 = board[r][c+1];
+          const cell3 = board[r][c+2];
+          if (cell1 && cell2 && cell3) {
+            const color1 = typeof cell1.color === 'string' ? cell1.color : getRandomColor();
+            const color2 = typeof cell2.color === 'string' ? cell2.color : getRandomColor();
+            const color3 = typeof cell3.color === 'string' ? cell3.color : getRandomColor();
+            
+            if (color1 === color2 && color2 === color3) {
+              // mark them
+              toRemove.push([r, c], [r, c+1], [r, c+2]);
+            }
+          }
+        }
+      }
+      // vertical matches
+      for (let c = 0; c < COLS; c++) {
+        for (let r = 0; r < ROWS-2; r++) {
+          const cell1 = board[r][c];
+          const cell2 = board[r+1][c];
+          const cell3 = board[r+2][c];
+          if (cell1 && cell2 && cell3) {
+            const color1 = typeof cell1.color === 'string' ? cell1.color : getRandomColor();
+            const color2 = typeof cell2.color === 'string' ? cell2.color : getRandomColor();
+            const color3 = typeof cell3.color === 'string' ? cell3.color : getRandomColor();
+            
+            if (color1 === color2 && color2 === color3) {
+              // mark them
+              toRemove.push([r, c], [r+1, c], [r+2, c]);
+            }
+          }
+        }
+      }
+      // remove duplicates
+      const uniqueRemovals = [];
+      toRemove.forEach(pos => {
+        if (!uniqueRemovals.some(u => u[0] === pos[0] && u[1] === pos[1])) {
+          uniqueRemovals.push(pos);
+        }
+      });
+      // remove them
+      if (uniqueRemovals.length > 0) {
+        for (let i = 0; i < uniqueRemovals.length; i++) {
+          const [rr, cc] = uniqueRemovals[i];
+          board[rr][cc] = null;
+        }
+        
+        // Play clear sound
+        playSound(clearSound);
+        
+        score += uniqueRemovals.length * 10;
+        // apply gravity
+        applyGravity();
+        // check for new matches recursively (chain combos)
+        checkMatches();
+      }
+    }
+
+    function applyGravity() {
+      for (let c = 0; c < COLS; c++) {
+        for (let r = ROWS-1; r >= 0; r--) {
+          if (!board[r][c]) {
+            // find first non-empty cell above
+            let rr = r-1;
+            while (rr >= 0 && !board[rr][c]) rr--;
+            if (rr >= 0) {
+              // move cell down
+              board[r][c] = board[rr][c];
+              board[rr][c] = null;
+            }
+          }
+        }
+      }
+    }
+
+    function drop() {
+      if (!collides(1, 0, currentPiece)) {
+        currentPos.row++;
+      } else {
+        // merge piece into board
+        mergePiece();
+        // spawn new piece
+        spawnPiece();
+      }
+      dropCounter = 0;
+    }
+
+    function resetGame() {
+      // Initialize board
+      board = [];
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          board[r][c] = null;
+        }
+      }
+      score = 0;
+      isGameActive = true;
+      isPaused = false;
+      startPauseBtn.textContent = "Pause Game";
+      
+      // Reset the next piece
+      nextPiece = null;
+      startGeneratingNextPiece();
+      
+      // Spawn the first piece
+      spawnPiece();
+    }
+    
+    function gameOver() {
+      isGameActive = false;
+      startPauseBtn.textContent = "Start Game";
+      
+      // Play game over sound
+      playSound(gameOverSound);
+      
+      // Draw game over message
+      ctx.fillStyle = "rgba(0, 0, 0, 0.7)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#fff";
+      ctx.font = "24px Arial";
+      ctx.textAlign = "center";
+      ctx.fillText("GAME OVER", canvas.width/2, canvas.height/2 - 15);
+      ctx.fillText(`Score: ${score}`, canvas.width/2, canvas.height/2 + 15);
+    }
+
+    /************************************************************
+     * 3. GAME LOOP
+     ************************************************************/
+    function update(time = 0) {
+      const deltaTime = time - lastTime;
+      lastTime = time;
+      
+      if (isGameActive && !isPaused) {
+        dropCounter += deltaTime;
+        if (dropCounter > dropInterval) {
+          drop();
+        }
+      }
+      
+      drawBoard();
+      requestAnimationFrame(update);
+    }
+
+    // Keyboard controls
+    document.addEventListener("keydown", e => {
+      if (!isGameActive || isPaused || !currentPiece) return;
+      
+      if (e.key === "ArrowLeft") {
+        if (!collides(0, -1, currentPiece)) {
+          currentPos.col--;
+          playSound(moveSound);
+        }
+      } else if (e.key === "ArrowRight") {
+        if (!collides(0, 1, currentPiece)) {
+          currentPos.col++;
+          playSound(moveSound);
+        }
+      } else if (e.key === "ArrowDown") {
+        drop();
+      } else if (e.key === "ArrowUp") {
+        rotatePiece();
+        playSound(rotateSound);
+      } else if (e.key === " " || e.key === "p") {
+        togglePause();
+      } else if (e.key === "m") {
+        // Toggle sound on/off
+        soundEnabled = !soundEnabled;
+      }
+    });
+    
+    // Start/Pause button
+    function togglePause() {
+      if (!isGameActive) {
+        resetGame();
+      } else {
+        isPaused = !isPaused;
+        startPauseBtn.textContent = isPaused ? "Resume Game" : "Pause Game";
+      }
+    }
+    
+    // Event listeners
+    startPauseBtn.addEventListener('click', togglePause);
+    restartBtn.addEventListener('click', resetGame);
+    
+    startCameraBtn.addEventListener('click', () => {
+      if (!currentStream) {
+        initWebcam();
+      } else {
+        switchCamera();
+      }
+    });
+    
+    // Grid size slider
+    gridSizeSlider.addEventListener('input', () => {
+      updateCanvasSize();
+    });
+    
+    // Pixelation slider - updated to refresh the display and properly affect pixelation
+    pixelSizeSlider.addEventListener('input', () => {
+      pixelValue.textContent = pixelSizeSlider.value;
+      
+      // Clear texture cache when pixelation changes
+      textureCache.clear();
+      
+      // Update the webcam preview (it will use the new pixelation value)
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        updateWebcamPreview();
+      }
+    });
+
+    /************************************************************
+     * 4. INIT & START
+     ************************************************************/
+    function startGame() {
+      // Initialize board
+      board = [];
+      for (let r = 0; r < ROWS; r++) {
+        board[r] = [];
+        for (let c = 0; c < COLS; c++) {
+          board[r][c] = null;
+        }
+      }
+      
+      // Draw initial board
+      drawBoard();
+      
+      // Start animation loop
+      update();
+    }
+
+    // Start the game with initially inactive state
+    startGame();
+  </script>
+</body>
+</html>

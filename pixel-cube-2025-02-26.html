@@ -1,0 +1,3413 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Simulators</title>
+    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
+    <style>
+        .tab-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            vertical-align: text-bottom;
+        }
+
+        #canvas {
+            background-color: var(--bs-dark);
+            border-radius: 8px;
+            max-height: 70vh;
+            width: 100%;
+            height: auto;
+        }
+
+        .controls {
+            background-color: var(--bs-dark);
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .form-range::-webkit-slider-thumb {
+            background: var(--bs-primary);
+        }
+
+        .form-range::-moz-range-thumb {
+            background: var(--bs-primary);
+        }
+        
+        /* Tab navigation styles */
+        .nav-tabs {
+            border-bottom: 1px solid var(--bs-border-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        .nav-tabs .nav-link {
+            color: var(--bs-body-color);
+            border: none;
+            border-bottom: 3px solid transparent;
+            border-radius: 0;
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            border-bottom-color: var(--bs-primary-border-subtle);
+        }
+        
+        .nav-tabs .nav-link.active {
+            color: var(--bs-primary);
+            background-color: transparent;
+            border-bottom-color: var(--bs-primary);
+        }
+        
+        /* Tab content containers */
+        .tab-content {
+            padding: 1rem 0;
+        }
+        
+        .tab-pane {
+            display: none;
+        }
+        
+        .tab-pane.active {
+            display: block;
+        }
+        
+        @media (max-width: 576px) {
+            .nav-tabs .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .tab-icon {
+                width: 20px;
+                height: 20px;
+                margin-right: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <!-- Tab Navigation -->
+            <div class="col-12 col-md-10 col-lg-8">
+                <ul class="nav nav-tabs" id="visionTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pixel-cube-tab" data-bs-toggle="tab" data-bs-target="#pixel-cube" 
+                                type="button" role="tab" aria-controls="pixel-cube" aria-selected="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .cube { fill: #007bff; }
+                                    .pixels { fill: #ffffff; opacity: 0.3; }
+                                </style>
+                                <rect class="cube" x="20" y="20" width="60" height="60" rx="5"/>
+                                <g class="pixels">
+                                    <rect x="30" y="30" width="10" height="10"/>
+                                    <rect x="45" y="30" width="10" height="10"/>
+                                    <rect x="60" y="30" width="10" height="10"/>
+                                    <rect x="30" y="45" width="10" height="10"/>
+                                    <rect x="45" y="45" width="10" height="10"/>
+                                    <rect x="60" y="45" width="10" height="10"/>
+                                    <rect x="30" y="60" width="10" height="10"/>
+                                    <rect x="45" y="60" width="10" height="10"/>
+                                    <rect x="60" y="60" width="10" height="10"/>
+                                </g>
+                            </svg>
+                            Pixel Cube Vision
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="kaleidoscope-tab" data-bs-toggle="tab" data-bs-target="#kaleidoscope" 
+                                type="button" role="tab" aria-controls="kaleidoscope" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .kaleidoscope-bg { fill: #9c27b0; }
+                                    .kaleidoscope-pattern { fill: #ffffff; opacity: 0.3; }
+                                </style>
+                                <circle class="kaleidoscope-bg" cx="50" cy="50" r="40"/>
+                                <path class="kaleidoscope-pattern" d="M50,10 L90,50 L50,90 L10,50 Z"/>
+                                <path class="kaleidoscope-pattern" d="M50,20 L80,50 L50,80 L20,50 Z"/>
+                                <path class="kaleidoscope-pattern" d="M50,30 L70,50 L50,70 L30,50 Z"/>
+                            </svg>
+                            Kaleidoscope 
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="animal-tab" data-bs-toggle="tab" data-bs-target="#animal" 
+                                type="button" role="tab" aria-controls="animal" aria-selected="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" class="tab-icon">
+                                <style>
+                                    .animal-bg { fill: #28a745; }
+                                    .animal-eye { fill: #ffffff; }
+                                    .animal-pupil { fill: #000000; }
+                                </style>
+                                <circle class="animal-bg" cx="50" cy="50" r="40"/>
+                                <ellipse class="animal-eye" cx="50" cy="50" rx="30" ry="20"/>
+                                <ellipse class="animal-pupil" cx="50" cy="50" rx="15" ry="5"/>
+                            </svg>
+                            Animal 
+                        </button>
+                    </li>
+                </ul>
+                
+                <!-- Tab Content -->
+                <div class="tab-content" id="visionTabsContent">
+                    <!-- Pixel Cube Vision Tab -->
+                    <div class="tab-pane fade show active" id="pixel-cube" role="tabpanel" aria-labelledby="pixel-cube-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <!-- Initial permission request UI -->
+                                <div id="startPrompt" class="text-center py-4">
+                                    <p class="mb-3">This simulator needs access to your camera to demonstrate the pixelation effect.</p>
+                                    <button id="startButton" class="btn btn-primary">Turn Camera On</button>
+                                </div>
+
+                                <video id="video" style="display: none;" autoplay playsinline crossorigin="anonymous"></video>
+                                <canvas id="canvas" class="w-100"></canvas>
+
+                                <div id="controls" class="controls mt-4" style="display: none;">
+                                    <div class="row align-items-center">
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <button id="switchCamera" class="btn btn-secondary">
+                                                    Turn Camera On
+                                                </button>
+                                                <button id="takeSnapshot" class="btn btn-primary">
+                                                    Take Snapshot
+                                                </button>
+                                                <button id="recordVideo" class="btn btn-danger">
+                                                    Capture Video 
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label for="pixelation" class="form-label">
+                                                Pixelation Level: <span id="pixelValue">16</span>
+                                            </label>
+                                            <input type="range" 
+                                                class="form-range" 
+                                                id="pixelation" 
+                                                min="5" 
+                                                max="50" 
+                                                value="16">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Kaleidoscope Vision Tab -->
+                    <div class="tab-pane fade" id="kaleidoscope" role="tabpanel" aria-labelledby="kaleidoscope-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <!-- Initial permission request UI -->
+                                <div id="kaleidoscopeStartPrompt" class="text-center py-4">
+                                    <p class="mb-3">This simulator needs access to your camera to demonstrate kaleidoscope effects.</p>
+                                    <button id="kaleidoscopeStartButton" class="btn btn-primary">Turn Camera On</button>
+                                </div>
+
+                                <div id="kaleidoscopeContainer" class="position-relative" style="display: none;">
+                                    <canvas id="kaleidoscopeCanvas" class="w-100 rounded"></canvas>
+                                    <div class="text-center mt-2 mb-3">
+                                        <small class="text-muted">Tip: The kaleidoscope effects work best with colorful scenes and movement</small>
+                                    </div>
+                                </div>
+
+                                <div id="kaleidoscopeControls" class="controls mt-4" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <button id="kaleidoscopeSwitchCamera" class="btn btn-secondary">
+                                                    Switch Camera
+                                                </button>
+                                                <button id="kaleidoscopeTakeSnapshot" class="btn btn-primary">
+                                                    Take Snapshot
+                                                </button>
+                                                <button id="kaleidoscopeRecordVideo" class="btn btn-danger">
+                                                    Capture Video
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Effect selector -->
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label">Effect Style:</label>
+                                            <div class="d-flex flex-wrap justify-content-between">
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn active" data-effect="basicBitch">Spiral Tunnel</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="fractalTwist">Fractal Twist</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="mirrorMaze">Mirror Maze</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="circularShards">Night Vision</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="prismaticBurst">Thermal Vision</button>
+                                                <button class="btn btn-outline-primary mb-2 kaleidoscope-effect-btn" data-effect="colorInversion">X-Ray Vision</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Effect parameters -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeSegments" class="form-label">
+                                                Segments: <span id="segmentsValue">10</span>
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeSegments" 
+                                                   min="3" 
+                                                   max="16" 
+                                                   value="10">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeIntensity" class="form-label">
+                                                Intensity: <span id="intensityValue">10</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeIntensity" 
+                                                   min="10" 
+                                                   max="100" 
+                                                   value="10">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeRotation" class="form-label">
+                                                Rotation Speed: <span id="rotationValue">0</span>
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeRotation" 
+                                                   min="-10" 
+                                                   max="10" 
+                                                   value="0">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kaleidoscopeZoom" class="form-label">
+                                                Zoom: <span id="zoomValue">100</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="kaleidoscopeZoom" 
+                                                   min="50" 
+                                                   max="150" 
+                                                   value="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Animal Vision Tab -->
+                    <div class="tab-pane fade" id="animal" role="tabpanel" aria-labelledby="animal-tab">
+                        <div class="card bg-dark">
+                            <div class="card-body">
+                                <!-- Initial permission request UI -->
+                                <div id="animalStartPrompt" class="text-center py-4">
+                                    <p class="mb-3">This simulator needs access to your camera to demonstrate how animals see the world.</p>
+                                    <button id="animalStartButton" class="btn btn-primary">Turn Camera On</button>
+                                </div>
+
+                                <div id="animalContainer" class="position-relative" style="display: none;">
+                                    <canvas id="animalCanvas" class="w-100 rounded"></canvas>
+                                    <div class="text-center mt-2 mb-3">
+                                        <small class="text-muted">Select an animal below to see the world through their eyes</small>
+                                    </div>
+                                </div>
+
+                                <div id="animalControls" class="controls mt-4" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex justify-content-between">
+                                                <button id="animalSwitchCamera" class="btn btn-secondary">
+                                                    Switch Camera
+                                                </button>
+                                                <button id="animalTakeSnapshot" class="btn btn-primary">
+                                                    Take Snapshot
+                                                </button>
+                                                <button id="animalRecordVideo" class="btn btn-danger">
+                                                    Capture Video
+                                                </button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Animal selector -->
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label">Animal Vision:</label>
+                                            <div class="d-flex flex-wrap justify-content-between">
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn active" data-animal="cat">Cat</button>
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn" data-animal="dog">Dog</button>
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn" data-animal="houseFly">House Fly</button>
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn" data-animal="mosquito">Mosquito</button>
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn" data-animal="eagle">Eagle</button>
+                                                <button class="btn btn-outline-primary mb-2 animal-vision-btn" data-animal="mantis">Mantis</button>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Effect parameters -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="animalBlur" class="form-label">
+                                                Sharpness: <span id="blurValue">100</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="animalBlur" 
+                                                   min="0" 
+                                                   max="100" 
+                                                   value="100">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="animalIntensity" class="form-label">
+                                                Intensity: <span id="animalIntensityValue">100</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="animalIntensity" 
+                                                   min="0" 
+                                                   max="100" 
+                                                   value="100">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="animalField" class="form-label">
+                                                Field of View: <span id="fieldValue">100</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="animalField" 
+                                                   min="30" 
+                                                   max="360" 
+                                                   value="100">
+                                        </div>
+                                        
+                                        <div class="col-md-6 mb-3">
+                                            <label for="animalNoise" class="form-label">
+                                                Noise Level: <span id="noiseValue">0</span>%
+                                            </label>
+                                            <input type="range" 
+                                                   class="form-range" 
+                                                   id="animalNoise" 
+                                                   min="0" 
+                                                   max="100" 
+                                                   value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;">
+                    Unable to access camera. Please ensure you have granted camera permissions.
+                </div>
+
+                <div class="card bg-dark mt-3" id="snapshotsContainer">
+                    <div class="card-header">
+                        <h5 class="mb-0">Snapshots & Videos</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="snapshots" class="row g-3">
+                            <!-- Snapshots will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Debug logs -->
+    <div class="container mt-4">
+        <div class="card bg-dark">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="mb-0">Debug Logs</h6>
+                    <small class="text-muted" id="versionInfo">v0.4a</small>
+                </div>
+                <div>
+                    <!-- <button id="testLogBtn" class="btn btn-sm btn-primary me-2">Test Log</button> -->
+                    <button id="clearLogs" class="btn btn-sm btn-secondary">Clear</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="debugLogs" class="text-light" style="max-height: 200px; overflow-y: auto; font-size: 12px; white-space: pre-wrap;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Simplified debug logging
+            const debugLogs = document.getElementById('debugLogs');
+            const clearLogsBtn = document.getElementById('clearLogs');
+            
+            function debugLog(message, isError = false) {
+                const timestamp = new Date().toLocaleTimeString();
+                const entry = document.createElement('div');
+                entry.className = isError ? 'text-danger' : 'text-info';
+                entry.textContent = `[${timestamp}] ${message}`;
+                
+                // Make sure the debugLogs element exists
+                if (debugLogs) {
+                    debugLogs.appendChild(entry);
+                    debugLogs.scrollTop = debugLogs.scrollHeight;
+                    
+                    // Make sure the parent card is visible
+                    const debugCard = debugLogs.closest('.card');
+                    if (debugCard) {
+                        debugCard.style.display = 'block';
+                    }
+                }
+                
+                // Always log to console as backup
+                if (isError) {
+                    console.error(message);
+                } else {
+                    console.log(message);
+                }
+            }
+            
+            // Test logger button
+            // testLogBtn.addEventListener('click', () => {
+            //     debugLog("Logger test successful!");
+            //     debugLog("If you see this message, logging is working properly.");
+            //     alert("Test log message added. Check the Debug Logs section below.");
+            // });
+            
+            // Clear logs button
+            clearLogsBtn.addEventListener('click', () => {
+                debugLogs.innerHTML = '';
+                debugLog('Logs cleared');
+            });
+            
+            // Initial log entry
+            debugLog('Debug panel initialized');
+            
+            // Draw initial canvas message
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 576;  // Reduced from 640 (10% smaller)
+            canvas.height = 576; // Reduced from 640 (10% smaller)
+            ctx.fillStyle = "#444";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#f00";
+            ctx.font = "24px Arial";
+            ctx.fillText("Click 'Turn Camera On' to start", 160, canvas.height/2);
+            
+            const video = document.getElementById('video');
+            const pixelationSlider = document.getElementById('pixelation');
+            const pixelValue = document.getElementById('pixelValue');
+            const errorMessage = document.getElementById('errorMessage');
+            const startButton = document.getElementById('startButton');
+            const controls = document.getElementById('controls');
+            const startPrompt = document.getElementById('startPrompt');
+            const switchCameraButton = document.getElementById('switchCamera');
+
+            const takeSnapshotButton = document.getElementById('takeSnapshot');
+            const recordVideoButton = document.getElementById('recordVideo');
+            const snapshotsContainer = document.getElementById('snapshotsContainer');
+            const snapshotsDiv = document.getElementById('snapshots');
+            
+            let isRecording = false;
+            let recordingFrames = [];
+            
+            let currentStream = null;
+            let currentFacingMode = 'user'; // Start with front camera
+            let snapshotCount = 0;
+
+            // Set initial canvas size to 1:1 aspect ratio
+            canvas.width = 576;  // Reduced from 640 (10% smaller)
+            canvas.height = 576; // Reduced from 640 (10% smaller)
+
+            // Update pixelation value display
+            pixelationSlider.addEventListener('input', (e) => {
+                pixelValue.textContent = e.target.value;
+            });
+
+            // Add a function to handle camera mirroring based on which camera is active
+            function updateCameraMirroring() {
+                // Apply mirror effect for front camera only
+                if (currentFacingMode === 'user') {
+                    canvas.style.transform = 'scaleX(-1)'; // Mirror horizontally
+                } else {
+                    canvas.style.transform = 'scaleX(1)'; // Normal display
+                }
+                debugLog(`Camera mirroring ${currentFacingMode === 'user' ? 'enabled' : 'disabled'} for ${currentFacingMode} camera`);
+            }
+
+            // Update the switchCamera function to handle mirroring
+            async function switchCamera() {
+                currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+                debugLog(`Switching camera to ${currentFacingMode}`);
+
+                if (currentStream) {
+                    currentStream.getTracks().forEach(track => track.stop());
+                }
+
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: currentFacingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                        audio: false
+                    });
+
+                    video.srcObject = currentStream;
+                    await video.play();
+
+                    // Update button text based on facing mode
+                    const switchCameraText = currentFacingMode === 'user' ? 'Switch to Rear Camera' : 'Switch to Front Camera';
+                    switchCameraButton.textContent = switchCameraText;
+                    kaleidoscopeSwitchCamera.textContent = switchCameraText;
+                    animalSwitchCamera.textContent = switchCameraText;
+
+                    // Update camera mirroring
+                    updateCameraMirroring();
+
+                    debugLog(`Camera switched to ${currentFacingMode}`);
+                } catch (err) {
+                    debugLog(`Error switching camera: ${err.message}`, true);
+                }
+            }
+
+            // Initialize webcam with better error handling
+            async function initWebcam() {
+                try {
+                    // First check if getUserMedia is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('WebRTC API not supported in this browser');
+                    }
+
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 576 },  // Reduced from 640
+                            height: { ideal: 576 }, // Reduced from 640
+                            aspectRatio: { ideal: 1 } // Force 1:1 aspect ratio
+                        } 
+                    });
+
+                    currentStream = stream;
+                    video.srcObject = stream;
+
+                    // Always show the switch camera button, we're using it as our main control
+                    switchCameraButton.style.display = 'block';
+
+                    // Explicitly start playing the video
+                    try {
+                        await video.play();
+                        console.log('Video playback started successfully');
+                        
+                        // Draw a message to indicate success
+                        ctx.fillStyle = "#007700";
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.fillStyle = "#fff";
+                        ctx.font = "24px Arial";
+                        ctx.fillText("Camera started successfully!", 160, canvas.height/2);
+                        
+                        // Show the controls
+                        controls.style.display = 'block';
+                        startPrompt.style.display = 'none';
+                        errorMessage.style.display = 'none';
+                        
+                        // Force a frame update
+                        setTimeout(() => {
+                            console.log("Forcing pixelation update");
+                            if (video.readyState >= 2) {
+                                console.log("Video is ready with state: " + video.readyState);
+                                pixelate(canvas, parseInt(pixelationSlider.value));
+                            }
+                        }, 500);
+                    } catch (playError) {
+                        console.error('Error playing video:', playError);
+                        throw new Error(`Failed to play video: ${playError.message}`);
+                    }
+
+                    // Start the animation loop once video is ready
+                    video.addEventListener('loadedmetadata', () => {
+                        console.log('Video metadata loaded:', {
+                            width: video.videoWidth,
+                            height: video.videoHeight
+                        });
+                        // Set canvas size to match video
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        animate();
+                    });
+
+                    // Handle video errors
+                    video.addEventListener('error', (e) => {
+                        console.error('Video element error:', {
+                            error: e.error,
+                            currentTime: video.currentTime,
+                            readyState: video.readyState
+                        });
+                        errorMessage.textContent = 'Error playing video stream. Please refresh and try again.';
+                        errorMessage.style.display = 'block';
+                    });
+
+                } catch (err) {
+                    console.error('Webcam access error:', {
+                        name: err.name,
+                        message: err.message,
+                        stack: err.stack
+                    });
+
+                    let errorMsg = 'Unable to access camera. ';
+
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        errorMsg += 'Please ensure you have granted camera permissions and refresh the page.';
+                    } else if (err.name === 'NotFoundError') {
+                        errorMsg += 'No camera device found. Please connect a camera and refresh.';
+                    } else if (err.name === 'NotReadableError') {
+                        errorMsg += 'Camera is already in use by another application. Please close other apps using the camera.';
+                    } else if (err.name === 'SecurityError') {
+                        errorMsg += 'Camera access is blocked. Please ensure you are using HTTPS or localhost.';
+                    } else {
+                        errorMsg += `An unexpected error occurred: ${err.message}`;
+                    }
+
+                    errorMessage.textContent = errorMsg;
+                    errorMessage.style.display = 'block';
+                }
+            }
+
+            // Pixelate the video frame with guaranteed square pixels for all devices
+            function pixelate(sourceCanvas, pixelSize) {
+                const w = sourceCanvas.width;
+                const h = sourceCanvas.height;
+                
+                // Create a temporary canvas for the pixelation effect
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCanvas.width = w;
+                tempCanvas.height = h;
+                
+                // Draw the video frame
+                if (video.readyState >= 2) { // HAVE_CURRENT_DATA or better
+                    tempCtx.drawImage(video, 0, 0, w, h);
+                } else {
+                    console.log("Video not ready yet: " + video.readyState);
+                    // Draw a message if video isn't ready
+                    ctx.fillStyle = "#444";
+                    ctx.fillRect(0, 0, w, h);
+                    ctx.fillStyle = "#f00";
+                    ctx.font = "24px Arial";
+                    ctx.fillText("Waiting for camera...", 180, h/2);
+                    return; // Skip the rest of the pixelation
+                }
+                
+                // Determine the size of each square pixel based on the pixelation level
+                // This will be a fixed number of pixels on both dimensions
+                const totalPixels = Math.max(Math.floor(Math.min(w, h) / pixelSize), 1);
+                
+                // Calculate final size in pixels for each square
+                const pixelWidth = Math.floor(w / totalPixels);
+                const pixelHeight = Math.floor(h / totalPixels);
+                
+                // Calculate centering offsets if there's excess space
+                const xOffset = Math.floor((w - (pixelWidth * totalPixels)) / 2);
+                const yOffset = Math.floor((h - (pixelHeight * totalPixels)) / 2);
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, w, h);
+                
+                // Fill with black background (for any unused space)
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, w, h);
+                
+                // Disable image smoothing
+                ctx.imageSmoothingEnabled = false;
+                
+                // Debug indication
+                ctx.fillStyle = "#444";
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = "#f00";
+                ctx.font = "20px Arial";
+                ctx.fillText("Waiting for camera...", 20, h/2);
+                
+                // Create square pixels
+                for (let y = 0; y < totalPixels; y++) {
+                    for (let x = 0; x < totalPixels; x++) {
+                        // Calculate the position to sample from the source
+                        const sourceX = Math.floor(x * (w / totalPixels) + (w / totalPixels / 2));
+                        const sourceY = Math.floor(y * (h / totalPixels) + (h / totalPixels / 2));
+                        
+                        // Sample the color
+                        const data = tempCtx.getImageData(sourceX, sourceY, 1, 1).data;
+                        
+                        // Draw a square pixel
+                        // Force the width and height to be the same to ensure square pixels
+                        const size = Math.min(pixelWidth, pixelHeight);
+                        
+                        ctx.fillStyle = `rgba(${data[0]}, ${data[1]}, ${data[2]}, ${data[3]/255})`;
+                        
+                        // Position the square with proper centering
+                        const pixelX = x * size + xOffset;
+                        const pixelY = y * size + yOffset;
+                        
+                        ctx.fillRect(pixelX, pixelY, size, size);
+                    }
+                }
+                
+                // Re-enable image smoothing
+                ctx.imageSmoothingEnabled = true;
+            }
+
+            // Animation loop
+            function animate() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Get current pixelation level
+                    const pixelSize = parseInt(pixelationSlider.value);
+
+                    // Clear canvas
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                    // Apply pixelation effect
+                    pixelate(canvas, pixelSize);
+                }
+
+                // Request next frame
+                requestAnimationFrame(animate);
+            }
+
+            // Handle window resize
+            function handleResize() {
+                const container = canvas.parentElement;
+                const aspectRatio = canvas.width / canvas.height;
+                const newWidth = container.clientWidth;
+                const newHeight = newWidth / aspectRatio;
+
+                canvas.style.width = `${newWidth}px`;
+                canvas.style.height = `${newHeight}px`;
+            }
+
+            // Take snapshot function
+            function takeSnapshot() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Create a new snapshot canvas
+                    const snapshotCanvas = document.createElement('canvas');
+                    snapshotCanvas.width = canvas.width;
+                    snapshotCanvas.height = canvas.height;
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    
+                    // Copy the current canvas content to the snapshot canvas
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                    
+                    // Convert to image data URL
+                    const imageDataUrl = snapshotCanvas.toDataURL('image/png');
+                    
+                    // Create snapshot element
+                    const snapshotEl = document.createElement('div');
+                    snapshotEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create snapshot card - removed download button as requested
+                    snapshotEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageDataUrl}" class="card-img-top" alt="Snapshot ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <small class="text-muted">Snapshot ${snapshotCount}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add to snapshots container
+                    snapshotsDiv.prepend(snapshotEl);
+                    
+                    // Show snapshots container if it's the first snapshot
+                    if (snapshotCount === 1) {
+                        snapshotsContainer.style.display = 'block';
+                    }
+                }
+            }
+            
+            // Update the startRecording function to show time in tenths of a second
+            function startRecording() {
+                if (isRecording) return;
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    debugLog("Cannot record, video not ready", true);
+                    return;
+                }
+                
+                debugLog("Starting video recording...");
+                isRecording = true;
+                recordingFrames = [];
+                recordVideoButton.textContent = "0.0s of 7.0s"; // Initialize with 0.0 seconds
+                recordVideoButton.disabled = true;
+                
+                // Record for 7 seconds (at 5 frames per second = 35 frames)
+                let framesLeft = 35;
+                let totalFrames = framesLeft;
+                let elapsedTime = 0; // Track elapsed time in tenths of seconds
+                
+                debugLog(`Recording ${framesLeft} frames (7 seconds) at ${canvas.width}x${canvas.height}`);
+                
+                // Timer to update elapsed time display
+                const timerInterval = setInterval(() => {
+                    elapsedTime += 0.1; // Add one tenth of a second
+                    // Format to show one decimal place
+                    const timeDisplay = elapsedTime.toFixed(1);
+                    recordVideoButton.textContent = `${timeDisplay}s of 7.0s`;
+                }, 100); // Update every 100ms (1/10 second)
+                
+                // Capture a frame with secure method
+                function captureFrame() {
+                    if (framesLeft <= 0 || !isRecording) {
+                        clearInterval(timerInterval); // Stop the timer when done
+                        debugLog(`Captured all ${totalFrames} frames`);
+                        finishRecording();
+                        return;
+                    }
+                    
+                    try {
+                        // Create a new frame canvas
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = canvas.width;
+                        frameCanvas.height = canvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        // IMPORTANT: Draw a solid color first to avoid security issues
+                        frameCtx.fillStyle = "#000000";
+                        frameCtx.fillRect(0, 0, frameCanvas.width, frameCanvas.height);
+                        
+                        if (currentFacingMode === 'user') {
+                            frameCtx.translate(frameCanvas.width, 0);
+                            frameCtx.scale(-1, 1);
+                        }
+                        
+                        // Copy the current canvas content to the frame
+                        frameCtx.drawImage(canvas, 0, 0);
+                        
+                        // Store the frame
+                        recordingFrames.push(frameCanvas);
+                        debugLog(`Captured frame ${totalFrames-framesLeft+1}/${totalFrames}`);
+                    } catch (e) {
+                        debugLog(`Error capturing frame: ${e.message}`, true);
+                    }
+                    
+                    // Update button to show progress (we're now using the timer instead)
+                    framesLeft--;
+                    
+                    // Capture the next frame in 200ms (5fps)
+                    setTimeout(captureFrame, 200);
+                }
+                
+                // Start capturing frames
+                captureFrame();
+            }
+            
+            // Update the finishRecording function with the fixes and make sure all variables are properly initialized
+            function finishRecording() {
+                if (!isRecording) return;
+                
+                // Set button to processing state
+                recordVideoButton.textContent = "Processing...";
+                recordVideoButton.disabled = true;
+                
+                debugLog("Processing captured frames: " + recordingFrames.length);
+                
+                try {
+                    // First create the static grid view (as a fallback and thumbnail)
+                    debugLog("Creating static image grid");
+                    
+                    // Create a canvas for the static image
+                    const gridCanvas = document.createElement('canvas');
+                    gridCanvas.width = 576;  // Reduced from 640
+                    gridCanvas.height = 432;  // Reduced from 480
+                    const ctx = gridCanvas.getContext('2d');
+                    
+                    // Fill with black background
+                    ctx.fillStyle = "#000";
+                    ctx.fillRect(0, 0, gridCanvas.width, gridCanvas.height);
+                    
+                    // Calculate grid layout
+                    const gridSize = Math.ceil(Math.sqrt(recordingFrames.length));
+                    const cellWidth = Math.floor(gridCanvas.width / gridSize);
+                    const cellHeight = Math.floor(gridCanvas.height / gridSize);
+                    
+                    // Draw frames in a grid
+                    recordingFrames.forEach((frame, i) => {
+                        try {
+                            const row = Math.floor(i / gridSize);
+                            const col = i % gridSize;
+                            const x = col * cellWidth;
+                            const y = row * cellHeight;
+                            
+                            // Draw the frame
+                            ctx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
+                            
+                            // Draw frame number
+                            ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                            ctx.font = "14px Arial";
+                            ctx.fillText((i+1).toString(), x + 5, y + 20);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Processing ${Math.round((i+1) / recordingFrames.length * 100)}%`;
+                        } catch (frameErr) {
+                            debugLog(`Error drawing frame ${i}: ${frameErr.message}`, true);
+                        }
+                    });
+                    
+                    // Get static grid as data URL
+                    const staticImageUrl = gridCanvas.toDataURL('image/png');
+                    debugLog("Created static image grid");
+                    
+                    // Prepare frames for Web Animation API
+                    debugLog("Creating web animation from frames");
+                    
+                    // Create individual frame images as data URLs
+                    const frameDataUrls = [];
+                    const frameSize = 288; // Animation size (reduced from 320)
+                    
+                    // Create a temporary canvas for frame resizing
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = frameSize;
+                    tempCanvas.height = frameSize;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // Convert each frame to a data URL
+                    recordingFrames.forEach((frame, index) => {
+                        try {
+                            // Clear temp canvas
+                            tempCtx.fillStyle = "#000";
+                            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+                            
+                            // Draw frame centered and scaled
+                            tempCtx.drawImage(frame, 0, 0, frame.width, frame.height, 
+                                             0, 0, tempCanvas.width, tempCanvas.height);
+                            
+                            // Get data URL
+                            const dataUrl = tempCanvas.toDataURL('image/jpeg', 0.7); // Using JPEG for smaller size
+                            frameDataUrls.push(dataUrl);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Creating animation ${Math.round((index+1) / recordingFrames.length * 100)}%`;
+                        } catch (e) {
+                            debugLog(`Error processing frame ${index}: ${e.message}`, true);
+                        }
+                    });
+                    
+                    debugLog(`Created ${frameDataUrls.length} frame data URLs`);
+                    
+                    // Create a video download option
+                    debugLog("Creating downloadable video file");
+                    recordVideoButton.textContent = "Creating video...";
+
+                    // Create a canvas for video recording
+                    const videoCanvas = document.createElement('canvas');
+                    videoCanvas.width = frameSize;
+                    videoCanvas.height = frameSize;
+                    const videoCtx = videoCanvas.getContext('2d');
+
+                    // Create a media stream from the canvas
+                    const stream = videoCanvas.captureStream(30); // 30fps
+
+                    // Check which MIME types are supported
+                    function getSupportedMimeType() {
+                        // Prioritize MP4 for better iOS/Mac compatibility
+                        const types = [
+                            'video/mp4;codecs=h264',
+                            'video/mp4',
+                            'video/webm;codecs=h264',
+                            'video/webm;codecs=vp9',
+                            'video/webm;codecs=vp8',
+                            'video/webm'
+                        ];
+                        
+                        for (let type of types) {
+                            if (MediaRecorder.isTypeSupported(type)) {
+                                debugLog(`Using supported MIME type: ${type}`);
+                                return type;
+                            }
+                        }
+                        
+                        debugLog('No supported video MIME types found, falling back to default', true);
+                        return '';
+                    }
+
+                    // Get supported MIME type
+                    const mimeType = getSupportedMimeType();
+
+                    // Create MediaRecorder with supported type
+                    let mediaRecorder;
+                    try {
+                        const options = {};
+                        if (mimeType) {
+                            options.mimeType = mimeType;
+                            // Higher bitrate for better quality
+                            options.videoBitsPerSecond = 3000000; // 3 Mbps for better quality
+                        }
+                        
+                        mediaRecorder = new MediaRecorder(stream, options);
+                        debugLog(`MediaRecorder created with options: ${JSON.stringify(options)}`);
+                    } catch (err) {
+                        debugLog(`MediaRecorder error: ${err.message}`, true);
+                        // Continue with just the animation, without video recording
+                        throw new Error(`Video recording not supported: ${err.message}`);
+                    }
+
+                    // Store video chunks
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) {
+                            chunks.push(e.data);
+                        }
+                    };
+
+                    // Create download buttons
+                    const downloadGridBtn = document.createElement('a');
+                    downloadGridBtn.className = 'btn btn-sm btn-outline-primary';
+                    downloadGridBtn.textContent = 'Download Grid';
+                    downloadGridBtn.href = staticImageUrl;
+                    downloadGridBtn.download = `pixel-cube-frames-${snapshotCount}.png`;
+
+                    const downloadVideoBtn = document.createElement('a');
+                    downloadVideoBtn.className = 'btn btn-sm btn-outline-primary disabled';
+                    downloadVideoBtn.textContent = 'Preparing Video...';
+                    
+                    // Set file extension based on MIME type - prioritize MP4
+                    const fileExtension = mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    downloadVideoBtn.download = `pixel-cube-video-${snapshotCount}.${fileExtension}`;
+
+                    // Handle video completion
+                    mediaRecorder.onstop = () => {
+                        // Create blob from chunks with the appropriate type
+                        const videoType = mimeType || (fileExtension === 'mp4' ? 'video/mp4' : 'video/webm');
+                        const videoBlob = new Blob(chunks, { type: videoType });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        debugLog(`Video created: ${Math.round(videoBlob.size/1024)}KB, type: ${videoType}`);
+                        
+                        // Update the download button to enable video download
+                        downloadVideoBtn.href = videoUrl;
+                        downloadVideoBtn.classList.remove('disabled');
+                        downloadVideoBtn.textContent = `Download ${fileExtension.toUpperCase()} Video`;
+                    };
+
+                    // Start recording with more frequent data collection for better compatibility
+                    mediaRecorder.start(100); // Collect data every 100ms for smoother video
+
+                    // Create each frame for the video
+                    let frameIndex = 0;
+                    function processNextVideoFrame() {
+                        if (frameIndex >= frameDataUrls.length) {
+                            // All frames processed, finish video
+                            mediaRecorder.stop();
+                            return;
+                        }
+                        
+                        // Create an image from the current frame
+                        const img = new Image();
+                        img.onload = () => {
+                            // Draw the frame to the video canvas
+                            videoCtx.fillStyle = "#000";
+                            videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.drawImage(img, 0, 0, videoCanvas.width, videoCanvas.height);
+                            
+                            // Update progress
+                            recordVideoButton.textContent = `Creating video ${Math.round((frameIndex+1) / frameDataUrls.length * 100)}%`;
+                            
+                            // Wait for next frame (matching our original 5fps)
+                            setTimeout(() => {
+                                frameIndex++;
+                                processNextVideoFrame();
+                            }, 200); // 200ms = 5fps
+                        };
+                        
+                        img.onerror = () => {
+                            debugLog(`Error loading frame ${frameIndex} for video`, true);
+                            frameIndex++;
+                            processNextVideoFrame();
+                        };
+                        
+                        img.src = frameDataUrls[frameIndex];
+                    }
+
+                    // Start processing frames
+                    processNextVideoFrame();
+
+                    // Create the controls differently
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'animation-controls d-flex mt-2 justify-content-between';
+
+                    // Create animation control buttons div
+                    const animBtnsDiv = document.createElement('div');
+                    animBtnsDiv.className = 'd-flex';
+
+                    // Play/pause button
+                    const playPauseBtn = document.createElement('button');
+                    playPauseBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                    playPauseBtn.textContent = 'Play';
+
+                    // Reset button
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.textContent = 'Reset';
+
+                    // Add buttons to their containers
+                    animBtnsDiv.appendChild(playPauseBtn);
+                    animBtnsDiv.appendChild(resetBtn);
+
+                    // Downloads div
+                    const downloadsDiv = document.createElement('div');
+                    downloadsDiv.className = 'd-flex';
+                    downloadsDiv.appendChild(downloadGridBtn);
+                    downloadsDiv.appendChild(document.createTextNode(' '));
+                    downloadsDiv.appendChild(downloadVideoBtn);
+
+                    // Add both groups to controls div
+                    controlsDiv.appendChild(animBtnsDiv);
+                    controlsDiv.appendChild(downloadsDiv);
+
+                    // Then update the card footer to remove the download button (since it's now in the controls)
+                    // Create card footer
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'card-footer text-center';
+                    cardFooter.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Frames: ${frameDataUrls.length}</small>
+                            <small class="text-success">5 fps animation</small>
+                        </div>
+                    `;
+
+                    // Create an element to show in gallery
+                    const videoEl = document.createElement('div');
+                    videoEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create container div for card
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    
+                    // Create card body for animation
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+
+                    // Create a container for the animation
+                    const animContainer = document.createElement('div');
+                    animContainer.className = 'animation-container';
+                    animContainer.style.position = 'relative';
+                    animContainer.style.width = '100%';
+                    animContainer.style.height = 'auto';
+                    animContainer.style.aspectRatio = '1/1';
+                    animContainer.style.overflow = 'hidden';
+                    animContainer.style.backgroundColor = '#000';
+                    animContainer.style.margin = '0 auto'; // Center it horizontally
+
+                    // Create image element to animate
+                    const animImage = document.createElement('img');
+                    animImage.style.width = '100%';
+                    animImage.style.height = '100%';
+                    animImage.src = frameDataUrls[0]; // Set first frame as initial image
+                    animContainer.appendChild(animImage);
+
+                    // Add it to cardBody before the controls
+                    cardBody.appendChild(animContainer);
+                    cardBody.appendChild(controlsDiv);
+
+                    // Animation state and functions
+                    let isPlaying = false;
+                    let currentFrame = 0;
+                    let animationInterval;
+
+                    // Animation function
+                    function updateAnimation() {
+                        currentFrame = (currentFrame + 1) % frameDataUrls.length;
+                        animImage.src = frameDataUrls[currentFrame];
+                    }
+
+                    // Play/pause function
+                    function togglePlayPause() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            playPauseBtn.textContent = 'Play';
+                        } else {
+                            animationInterval = setInterval(updateAnimation, 200); // 5fps
+                            playPauseBtn.textContent = 'Pause';
+                        }
+                        isPlaying = !isPlaying;
+                    }
+
+                    // Reset function
+                    function resetAnimation() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            isPlaying = false;
+                            playPauseBtn.textContent = 'Play';
+                        }
+                        currentFrame = 0;
+                        animImage.src = frameDataUrls[0];
+                    }
+
+                    // Attach event handlers
+                    playPauseBtn.addEventListener('click', togglePlayPause);
+                    resetBtn.addEventListener('click', resetAnimation);
+
+                    // Assemble elements
+                    cardDiv.appendChild(cardBody);
+                    cardDiv.appendChild(cardFooter);
+                    videoEl.appendChild(cardDiv);
+                    
+                    // Add to gallery
+                    debugLog("Adding web animation to snapshots container");
+                    snapshotsDiv.prepend(videoEl);
+                    snapshotsContainer.style.display = 'block';
+                    
+                } catch (error) {
+                    debugLog("Error processing frames: " + error.message, true);
+                    alert("Error creating animation: " + error.message);
+                } finally {
+                    // Always clean up and reset state
+                    isRecording = false;
+                    recordingFrames = [];
+                    recordVideoButton.textContent = "Capture Video"; // Changed from "Capture Frames"
+                    recordVideoButton.disabled = false;
+                }
+            }
+
+            // Add event listeners
+            window.addEventListener('resize', handleResize);
+            
+            // Show controls immediately 
+            setTimeout(() => {
+                console.log('Showing controls...');
+                handleResize();
+                startPrompt.style.display = 'none'; // Hide the start prompt
+                controls.style.display = 'block'; // Show controls with camera button
+                
+                // Start animation loop immediately, so we can at least show a message
+                animate();
+            }, 500);
+            
+            // Keep the manual button for non-Mac or if auto-start fails
+            startButton.addEventListener('click', () => {
+                console.log('Starting webcam initialization...');
+                handleResize();
+                initWebcam().catch(err => {
+                    console.error('Failed to initialize webcam:', err);
+                });
+            });
+            
+            switchCameraButton.addEventListener('click', switchCamera);
+            takeSnapshotButton.addEventListener('click', takeSnapshot);
+            recordVideoButton.addEventListener('click', startRecording);
+
+            // Add this code inside the DOMContentLoaded event listener
+            // to override console.log for debug panel integration
+            const originalConsoleLog = console.log;
+            const originalConsoleError = console.error;
+
+            console.log = function() {
+                // Call the original console.log without triggering debugLog
+                originalConsoleLog.apply(console, arguments);
+                
+                // Only log to debug panel if this isn't coming from debugLog itself
+                const stack = new Error().stack || '';
+                if (!stack.includes('debugLog')) {
+                    const message = Array.from(arguments).join(' ');
+                    debugLog(message);
+                }
+            };
+
+            console.error = function() {
+                // Call the original console.error
+                originalConsoleError.apply(console, arguments);
+                
+                // Only log to debug panel if this isn't coming from debugLog itself
+                const stack = new Error().stack || '';
+                if (!stack.includes('debugLog')) {
+                    const message = Array.from(arguments).join(' ');
+                    debugLog(message, true);
+                }
+            };
+
+            debugLog("Console logging overridden for debug panel integration");
+
+            // Add the SimpleGif object implementation inside the DOMContentLoaded event listener
+            // Add this right after the debugLog function definition
+
+            // Implement the SimpleGif utility
+            window.SimpleGif = {
+                createFromFrames: function(frames, options = {}) {
+                    return new Promise((resolve, reject) => {
+                        // Define variables at the top level
+                        let gridPreviewUrl = null;
+                        let gridWidth = options.width || 640;
+                        let gridHeight = options.height || 480;
+                        let frameCount = frames ? frames.length : 0;
+                        let gifError = null;
+                        
+                        try {
+                            if (!frames || frames.length === 0) {
+                                throw new Error("No frames provided for GIF creation");
+                            }
+                            
+                            debugLog("Creating animated GIF from " + frames.length + " frames");
+                            
+                            // Create static preview first
+                            let gridCanvas = document.createElement('canvas');
+                            gridCanvas.width = gridWidth;
+                            gridCanvas.height = gridHeight;
+                            let gridCtx = gridCanvas.getContext('2d');
+                            
+                            // Fill with black background
+                            gridCtx.fillStyle = "#000";
+                            gridCtx.fillRect(0, 0, gridWidth, gridHeight);
+                            
+                            // Draw frames in a grid
+                            const gridSize = Math.ceil(Math.sqrt(frames.length));
+                            const cellWidth = Math.floor(gridWidth / gridSize);
+                            const cellHeight = Math.floor(gridHeight / gridSize);
+                            
+                            // Draw each frame in the grid
+                            frames.forEach((frame, i) => {
+                                try {
+                                    const row = Math.floor(i / gridSize);
+                                    const col = i % gridSize;
+                                    const x = col * cellWidth;
+                                    const y = row * cellHeight;
+                                    
+                                    // Draw the frame
+                                    gridCtx.drawImage(frame, 0, 0, frame.width, frame.height, x, y, cellWidth, cellHeight);
+                                    
+                                    // Draw frame number
+                                    gridCtx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                                    gridCtx.font = "14px Arial";
+                                    gridCtx.fillText((i+1).toString(), x + 5, y + 20);
+                                } catch (frameError) {
+                                    debugLog(`Error drawing frame ${i} in grid: ${frameError.message}`, true);
+                                }
+                            });
+                            
+                            // Get preview URL
+                            try {
+                                gridPreviewUrl = gridCanvas.toDataURL('image/png');
+                                debugLog("Created grid preview successfully");
+                            } catch (previewError) {
+                                debugLog("Error creating grid preview: " + previewError.message, true);
+                            }
+                            
+                            // Now try to create an animated GIF with a more direct approach
+                            debugLog("Starting direct GIF creation");
+                            
+                            // Prepare frames for GIF
+                            const gifFramesPromises = frames.map((frame, index) => {
+                                return new Promise((resolveFrame) => {
+                                    try {
+                                        // Create a new canvas for this frame
+                                        const frameCanvas = document.createElement('canvas');
+                                        const frameSize = 200; // Reduced size for better performance
+                                        frameCanvas.width = frameSize;
+                                        frameCanvas.height = frameSize;
+                                        const frameCtx = frameCanvas.getContext('2d');
+                                        
+                                        // Draw black background
+                                        frameCtx.fillStyle = '#000000';
+                                        frameCtx.fillRect(0, 0, frameSize, frameSize);
+                                        
+                                        // Draw the frame content, scaled down
+                                        frameCtx.drawImage(frame, 0, 0, frame.width, frame.height, 
+                                                          0, 0, frameSize, frameSize);
+                                        
+                                        // Convert to data URL
+                                        frameCanvas.toBlob((blob) => {
+                                            resolveFrame({
+                                                blob: blob,
+                                                url: URL.createObjectURL(blob),
+                                                index: index
+                                            });
+                                        }, 'image/png');
+                                    } catch (err) {
+                                        debugLog(`Error preparing frame ${index}: ${err.message}`, true);
+                                        // Return a placeholder if frame preparation fails
+                                        resolveFrame({
+                                            error: err.message,
+                                            index: index
+                                        });
+                                    }
+                                });
+                            });
+                            
+                            // Wait for all frames to be prepared
+                            Promise.all(gifFramesPromises)
+                            .then(preparedFrames => {
+                                debugLog(`All ${preparedFrames.length} frames prepared for GIF`);
+                                
+                                // Try creating a GIF with gif.js
+                                try {
+                                    if (typeof GIF === 'undefined') {
+                                        throw new Error("GIF.js library not available");
+                                    }
+                                    
+                                    // Create a new GIF
+                                    const frameSize = 200; // Match the size used in frame preparation
+                                    const gif = new GIF({
+                                        workers: 2,
+                                        quality: 10,
+                                        width: frameSize,
+                                        height: frameSize,
+                                        workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js'
+                                    });
+                                    
+                                    // Add each prepared frame
+                                    preparedFrames.forEach((frameData, index) => {
+                                        if (!frameData.error && frameData.blob) {
+                                            const img = new Image();
+                                            img.src = frameData.url;
+                                            
+                                            // Need to wait for the image to load
+                                            img.onload = function() {
+                                                gif.addFrame(img, {delay: 200}); // 200ms = 5fps
+                                                
+                                                // If this is the last frame, render the GIF
+                                                if (index === preparedFrames.length - 1) {
+                                                    debugLog("All frames added to GIF, rendering...");
+                                                    gif.render();
+                                                }
+                                            };
+                                            
+                                            img.onerror = function() {
+                                                debugLog(`Error loading image for frame ${index}`, true);
+                                                // If this is the last frame, render anyway
+                                                if (index === preparedFrames.length - 1) {
+                                                    gif.render();
+                                                }
+                                            };
+                                        }
+                                    });
+                                    
+                                    // Handle GIF completion
+                                    gif.on('finished', function(blob) {
+                                        debugLog(`GIF created successfully! Size: ${Math.round(blob.size/1024)}KB`);
+                                        
+                                        // Create a URL for the GIF
+                                        const gifUrl = URL.createObjectURL(blob);
+                                        
+                                        // Success! Return the GIF URL
+                                        resolve({
+                                            url: gifUrl,
+                                            blob: blob,
+                                            width: frameSize,
+                                            height: frameSize,
+                                            frameCount: frames.length,
+                                            isAnimated: true
+                                        });
+                                    });
+                                    
+                                    // Handle GIF progress
+                                    gif.on('progress', function(p) {
+                                        debugLog(`GIF encoding: ${Math.round(p*100)}%`);
+                                    });
+                                    
+                                } catch (gifErr) {
+                                    gifError = gifErr;
+                                    throw gifErr;
+                                }
+                            })
+                            .catch(err => {
+                                debugLog("Error in GIF creation: " + err.message, true);
+                                
+                                // Fall back to the static preview
+                                resolve({
+                                    url: gridPreviewUrl || "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==",
+                                    width: gridWidth,
+                                    height: gridHeight,
+                                    frameCount: frameCount,
+                                    isAnimated: false,
+                                    error: err.message
+                                });
+                            });
+                            
+                        } catch (error) {
+                            debugLog("Critical error in GIF creation: " + error.message, true);
+                            
+                            // Create a fallback preview if needed
+                            if (!gridPreviewUrl) {
+                                try {
+                                    const fallbackCanvas = document.createElement('canvas');
+                                    fallbackCanvas.width = gridWidth;
+                                    fallbackCanvas.height = gridHeight;
+                                    const fallbackCtx = fallbackCanvas.getContext('2d');
+                                    fallbackCtx.fillStyle = "#333";
+                                    fallbackCtx.fillRect(0, 0, fallbackCanvas.width, fallbackCanvas.height);
+                                    fallbackCtx.fillStyle = "#FFF";
+                                    fallbackCtx.font = "20px Arial";
+                                    fallbackCtx.fillText("GIF Creation Failed", gridWidth/2 - 100, gridHeight/2);
+                                    fallbackCtx.font = "16px Arial";
+                                    fallbackCtx.fillText(error.message, gridWidth/2 - 150, gridHeight/2 + 30);
+                                    gridPreviewUrl = fallbackCanvas.toDataURL('image/png');
+                                } catch (e) {
+                                    gridPreviewUrl = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+                                }
+                            }
+                            
+                            // Fall back to the static preview
+                            resolve({
+                                url: gridPreviewUrl,
+                                width: gridWidth,
+                                height: gridHeight,
+                                frameCount: frameCount,
+                                isAnimated: false,
+                                error: error.message
+                            });
+                        }
+                    });
+                }
+            };
+
+            // Update the version tag code to include a fixed version number
+            const buildDate = new Date().toLocaleDateString();
+            const versionNumber = "v0.6a"; // Updated from v0.5a to v0.6a
+            document.getElementById('versionInfo').textContent = `${versionNumber} (${buildDate})`;
+            debugLog(`Version info set: ${versionNumber} built on ${buildDate}`);
+            
+            // Tab switching functionality
+            const tabButtons = document.querySelectorAll('.nav-link');
+            const tabPanes = document.querySelectorAll('.tab-pane');
+            
+            // Function to switch tabs
+            function switchTab(targetId) {
+                // Hide all tab panes
+                tabPanes.forEach(pane => {
+                    pane.classList.remove('show', 'active');
+                });
+                
+                // Deactivate all tab buttons
+                tabButtons.forEach(button => {
+                    button.classList.remove('active');
+                    button.setAttribute('aria-selected', 'false');
+                });
+                
+                // Show the selected tab pane
+                const targetPane = document.getElementById(targetId);
+                if (targetPane) {
+                    targetPane.classList.add('show', 'active');
+                }
+                
+                // Activate the selected tab button
+                const targetButton = document.querySelector(`[data-bs-target="#${targetId}"]`);
+                if (targetButton) {
+                    targetButton.classList.add('active');
+                    targetButton.setAttribute('aria-selected', 'true');
+                }
+                
+                // Log the tab switch
+                debugLog(`Switched to ${targetId} tab`);
+            }
+            
+            // Add click event listeners to tab buttons
+            tabButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const targetId = button.getAttribute('data-bs-target').substring(1);
+                    switchTab(targetId);
+                });
+            });
+            
+            debugLog("Tab navigation initialized");
+            
+            // Kaleidoscope functionality
+            const kaleidoscopeCanvas = document.getElementById('kaleidoscopeCanvas');
+            const kaleidoscopeStartButton = document.getElementById('kaleidoscopeStartButton');
+            const kaleidoscopeStartPrompt = document.getElementById('kaleidoscopeStartPrompt');
+            const kaleidoscopeContainer = document.getElementById('kaleidoscopeContainer');
+            const kaleidoscopeControls = document.getElementById('kaleidoscopeControls');
+            const kaleidoscopeSwitchCamera = document.getElementById('kaleidoscopeSwitchCamera');
+            const kaleidoscopeTakeSnapshot = document.getElementById('kaleidoscopeTakeSnapshot');
+            const kaleidoscopeRecordVideo = document.getElementById('kaleidoscopeRecordVideo');
+
+            // Helper function for video recording
+            function getSupportedMimeType() {
+                const types = [
+                    'video/mp4;codecs=h264',
+                    'video/mp4',
+                    'video/webm;codecs=h264',
+                    'video/webm;codecs=vp9',
+                    'video/webm;codecs=vp8',
+                    'video/webm'
+                ];
+                
+                for (let type of types) {
+                    if (MediaRecorder.isTypeSupported(type)) {
+                        debugLog(`Using supported MIME type: ${type}`);
+                        return type;
+                    }
+                }
+                
+                debugLog('No supported video MIME types found, falling back to default', true);
+                return '';
+            }
+
+            // Effect controls
+            // Add event listener for kaleidoscope start button
+            kaleidoscopeStartButton.addEventListener('click', () => {
+                debugLog('Starting kaleidoscope webcam initialization...');
+                initKaleidoscopeWebcam().catch(err => {
+                    debugLog('Failed to initialize kaleidoscope webcam:', err);
+                    errorMessage.textContent = 'Failed to initialize camera. Please ensure you have granted camera permissions.';
+                    errorMessage.style.display = 'block';
+                });
+            });
+
+            // Add event listener for kaleidoscope switch camera button
+            kaleidoscopeSwitchCamera.addEventListener('click', switchCamera);
+            
+            // Add event listeners for snapshot and recording
+            kaleidoscopeTakeSnapshot.addEventListener('click', takeKaleidoscopeSnapshot);
+            kaleidoscopeRecordVideo.addEventListener('click', startKaleidoscopeRecording);
+            
+            // Animal Vision functionality
+            const animalCanvas = document.getElementById('animalCanvas');
+            const animalStartButton = document.getElementById('animalStartButton');
+            const animalStartPrompt = document.getElementById('animalStartPrompt');
+            const animalContainer = document.getElementById('animalContainer');
+            const animalControls = document.getElementById('animalControls');
+            const animalSwitchCamera = document.getElementById('animalSwitchCamera');
+            const animalTakeSnapshot = document.getElementById('animalTakeSnapshot');
+            const animalRecordVideo = document.getElementById('animalRecordVideo');
+            
+            // Animal vision control elements
+            const animalBlurSlider = document.getElementById('animalBlur');
+            const animalIntensitySlider = document.getElementById('animalIntensity');
+            const animalFieldSlider = document.getElementById('animalField');
+            const animalNoiseSlider = document.getElementById('animalNoise');
+            
+            // Value display spans
+            const blurValue = document.getElementById('blurValue');
+            const animalIntensityValue = document.getElementById('animalIntensityValue');
+            const fieldValue = document.getElementById('fieldValue');
+            const noiseValue = document.getElementById('noiseValue');
+            
+            // Function to update value displays
+            function updateAnimalValueDisplays() {
+                blurValue.textContent = animalBlurSlider.value;
+                animalIntensityValue.textContent = animalIntensitySlider.value;
+                fieldValue.textContent = animalFieldSlider.value;
+                noiseValue.textContent = animalNoiseSlider.value;
+            }
+            
+            // Add event listeners for animal sliders
+            animalBlurSlider.addEventListener('input', updateAnimalValueDisplays);
+            animalIntensitySlider.addEventListener('input', updateAnimalValueDisplays);
+            animalFieldSlider.addEventListener('input', updateAnimalValueDisplays);
+            animalNoiseSlider.addEventListener('input', updateAnimalValueDisplays);
+            
+            // Animal vision state
+            let currentAnimal = 'cat';
+            let animalIsRecording = false;
+            let animalRecordingFrames = [];
+            
+            // Initialize animal canvas
+            animalCanvas.width = 576;
+            animalCanvas.height = 576;
+            const aCtx = animalCanvas.getContext('2d');
+            
+            // Draw initial message on animal canvas
+            aCtx.fillStyle = "#444";
+            aCtx.fillRect(0, 0, animalCanvas.width, animalCanvas.height);
+            aCtx.fillStyle = "#f00";
+            aCtx.font = "24px Arial";
+            aCtx.fillText("Click 'Turn Camera On' to start", 160, animalCanvas.height/2);
+            
+            // Set default values for animal controls
+            animalBlurSlider.value = '100';
+            animalIntensitySlider.value = '100';
+            animalFieldSlider.value = '100';
+            animalNoiseSlider.value = '0';
+            updateAnimalValueDisplays();
+            
+            // Animal button click handler
+            const animalButtons = document.querySelectorAll('.animal-vision-btn');
+            animalButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    animalButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentAnimal = button.dataset.animal;
+                    debugLog(`Switched to ${currentAnimal} vision`);
+                    
+                    // Update sliders with animal-specific defaults
+                    setAnimalDefaults(currentAnimal);
+                });
+            });
+            
+            // Function to set animal-specific default values
+            function setAnimalDefaults(animal) {
+                switch(animal) {
+                    case 'cat':
+                        animalBlurSlider.value = '90'; // Cats have good night vision but slightly less sharp than humans
+                        animalIntensitySlider.value = '80'; // Less color sensitivity
+                        animalFieldSlider.value = '200'; // Wider field of view
+                        animalNoiseSlider.value = '10';
+                        break;
+                    case 'dog':
+                        animalBlurSlider.value = '80'; // Dogs have less visual acuity
+                        animalIntensitySlider.value = '60'; // Dogs see fewer colors (dichromatic)
+                        animalFieldSlider.value = '240'; // Dogs have wider field of view
+                        animalNoiseSlider.value = '20';
+                        break;
+                    case 'houseFly':
+                        animalBlurSlider.value = '40'; // Flies have compound eyes with less detail
+                        animalIntensitySlider.value = '90'; // Different color sensitivity
+                        animalFieldSlider.value = '360'; // Nearly 360-degree vision
+                        animalNoiseSlider.value = '50';
+                        break;
+                    case 'mosquito':
+                        animalBlurSlider.value = '30'; // Very poor vision
+                        animalIntensitySlider.value = '50'; // Limited color perception
+                        animalFieldSlider.value = '300'; // Wide but limited field
+                        animalNoiseSlider.value = '70';
+                        break;
+                    case 'eagle':
+                        animalBlurSlider.value = '100'; // Eagles have exceptional visual acuity
+                        animalIntensitySlider.value = '120'; // Enhanced color perception
+                        animalFieldSlider.value = '180'; // More focused forward vision
+                        animalNoiseSlider.value = '0';
+                        break;
+                    case 'mantis':
+                        animalBlurSlider.value = '70'; // Decent visual acuity
+                        animalIntensitySlider.value = '100'; // Different color spectrum - can see UV
+                        animalFieldSlider.value = '270'; // Wide field of view
+                        animalNoiseSlider.value = '30';
+                        break;
+                    default:
+                        animalBlurSlider.value = '100';
+                        animalIntensitySlider.value = '100';
+                        animalFieldSlider.value = '100';
+                        animalNoiseSlider.value = '0';
+                }
+                updateAnimalValueDisplays();
+            }
+            
+            // Initialize animal webcam
+            animalStartButton.addEventListener('click', () => {
+                debugLog('Starting animal vision webcam initialization...');
+                initAnimalWebcam().catch(err => {
+                    debugLog('Failed to initialize animal vision webcam:', err);
+                    errorMessage.textContent = 'Failed to initialize camera. Please ensure you have granted camera permissions.';
+                    errorMessage.style.display = 'block';
+                });
+            });
+            
+            // Add event listener for animal switch camera button
+            animalSwitchCamera.addEventListener('click', switchCamera);
+            
+            // Add event listeners for snapshot and recording
+            animalTakeSnapshot.addEventListener('click', takeAnimalSnapshot);
+            animalRecordVideo.addEventListener('click', startAnimalRecording);
+            
+            async function initAnimalWebcam() {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('WebRTC API not supported in this browser');
+                    }
+
+                    // If we already have a stream, use it
+                    if (currentStream && video.srcObject) {
+                        // Show animal vision view
+                        animalStartPrompt.style.display = 'none';
+                        animalContainer.style.display = 'block';
+                        animalControls.style.display = 'block';
+                        
+                        // Start animal vision animation
+                        animateAnimalVision();
+                        
+                        debugLog('Animal vision using existing camera stream');
+                        return;
+                    }
+
+                    // Otherwise initialize new stream
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 576 },
+                            height: { ideal: 576 },
+                            aspectRatio: { ideal: 1 }
+                        } 
+                    });
+
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    // Wait for video to be ready
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            video.play().then(resolve);
+                        };
+                    });
+                    
+                    // Show animal vision view
+                    animalStartPrompt.style.display = 'none';
+                    animalContainer.style.display = 'block';
+                    animalControls.style.display = 'block';
+                    
+                    // Update camera switch button text
+                    animalSwitchCamera.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                    
+                    // Start animal vision animation
+                    animateAnimalVision();
+                    
+                    debugLog('Animal vision camera initialized');
+                } catch (err) {
+                    debugLog('Animal vision camera error: ' + err.message, true);
+                    errorMessage.textContent = 'Failed to initialize camera: ' + err.message;
+                    errorMessage.style.display = 'block';
+                }
+            }
+            
+            // Animal vision effect rendering
+            function applyAnimalVision(ctx, animal, blur, intensity, fieldOfView, noise) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Create temporary canvas for source image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw video frame
+                tempCtx.drawImage(video, 0, 0, width, height);
+                
+                // Get image data for processing
+                const imageData = tempCtx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                
+                // Apply animal-specific vision effects
+                switch(animal) {
+                    case 'cat':
+                        // Cats have reduced color vision, better night vision, and vertically elongated pupils
+                        applyCatVision(data, width, height, intensity);
+                        break;
+                    case 'dog':
+                        // Dogs are red-green colorblind (dichromatic)
+                        applyDogVision(data, width, height, intensity);
+                        break;
+                    case 'houseFly':
+                        // House flies have compound eyes with many facets
+                        applyFlyVision(tempCtx, data, width, height, intensity);
+                        break;
+                    case 'mosquito':
+                        // Mosquitoes have poor vision, detect heat/CO2 more than visual
+                        applyMosquitoVision(data, width, height, intensity);
+                        break;
+                    case 'eagle':
+                        // Eagles have exceptional acuity and can see UV
+                        applyEagleVision(data, width, height, intensity);
+                        break;
+                    case 'mantis':
+                        // Mantis shrimp have sophisticated color vision with many more receptors
+                        applyMantisVision(data, width, height, intensity);
+                        break;
+                }
+                
+                // Apply noise
+                if (noise > 0) {
+                    applyNoise(data, width, height, noise);
+                }
+                
+                // Put processed image data back
+                tempCtx.putImageData(imageData, 0, 0);
+                
+                // Clear main canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Apply field of view mask
+                applyFieldOfView(ctx, tempCanvas, fieldOfView);
+                
+                // Apply blur if sharpness is less than 100%
+                if (blur < 100) {
+                    applyBlur(ctx, width, height, (100 - blur) / 10);
+                }
+            }
+            
+            // Cat vision - reduced color sensitivity, better night vision
+            function applyCatVision(data, width, height, intensity) {
+                const factor = (100 - intensity) / 100;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // Enhance blues and greens slightly, reduce reds
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Apply cat color vision (reduced red sensitivity, enhanced green/blue)
+                    data[i] = r * (0.7 + 0.3 * factor);      // Reduce red
+                    data[i + 1] = g * (1.1 - 0.1 * factor);  // Slightly enhance green
+                    data[i + 2] = b * (1.2 - 0.2 * factor);  // Enhance blue
+                    
+                    // Enhance brightness in darker areas (night vision)
+                    const brightness = (r + g + b) / 3;
+                    if (brightness < 128) {
+                        const boost = 1.3 - (brightness / 128) * 0.3;
+                        data[i] *= boost;
+                        data[i + 1] *= boost;
+                        data[i + 2] *= boost;
+                    }
+                }
+            }
+            
+            // Dog vision - dichromatic (red-green colorblind)
+            function applyDogVision(data, width, height, intensity) {
+                const factor = intensity / 100;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Convert to dog vision (dichromatic)
+                    // Dogs mainly see blues and yellows
+                    const gray = (r * 0.299 + g * 0.587 + b * 0.114);
+                    
+                    // Mix between grayscale and blue-yellow spectrum based on intensity
+                    const blueYellow = (r * 0.1 + g * 0.4 + b * 0.5);
+                    
+                    data[i] = gray * (1 - factor) + blueYellow * factor;
+                    data[i + 1] = gray * (1 - factor) + blueYellow * factor;
+                    data[i + 2] = b * 0.8 + gray * 0.2; // Keep some blue sensitivity
+                }
+            }
+            
+            // House fly vision - compound eyes creating a faceted view
+            function applyFlyVision(ctx, data, width, height, intensity) {
+                // Create a faceted compound eye effect
+                const facetSize = Math.max(5, Math.floor(20 * (100 - intensity) / 100) + 5);
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw the original image
+                tempCtx.putImageData(new ImageData(data, width, height), 0, 0);
+                
+                // Clear the original canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Create compound eye effect with facets
+                for (let x = 0; x < width; x += facetSize) {
+                    for (let y = 0; y < height; y += facetSize) {
+                        // Calculate average color for this facet
+                        const facetData = tempCtx.getImageData(x, y, facetSize, facetSize).data;
+                        let r = 0, g = 0, b = 0, count = 0;
+                        
+                        for (let i = 0; i < facetData.length; i += 4) {
+                            r += facetData[i];
+                            g += facetData[i + 1];
+                            b += facetData[i + 2];
+                            count++;
+                        }
+                        
+                        r = Math.floor(r / count);
+                        g = Math.floor(g / count);
+                        b = Math.floor(b / count);
+                        
+                        // Draw hexagon-shaped facet
+                        ctx.beginPath();
+                        const facetX = x + facetSize / 2;
+                        const facetY = y + facetSize / 2;
+                        const facetRadius = facetSize / 2;
+                        
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i * Math.PI / 3) - Math.PI / 6;
+                            const ptX = facetX + facetRadius * Math.cos(angle);
+                            const ptY = facetY + facetRadius * Math.sin(angle);
+                            
+                            if (i === 0) {
+                                ctx.moveTo(ptX, ptY);
+                            } else {
+                                ctx.lineTo(ptX, ptY);
+                            }
+                        }
+                        
+                        ctx.closePath();
+                        ctx.fillStyle = `rgb(${r},${g},${b})`;
+                        ctx.fill();
+                        
+                        // Add facet border for compound eye look
+                        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+                
+                // Get the faceted image data
+                const facetedData = ctx.getImageData(0, 0, width, height).data;
+                
+                // Copy it back to the original data
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = facetedData[i];
+                    data[i + 1] = facetedData[i + 1];
+                    data[i + 2] = facetedData[i + 2];
+                }
+                
+                // Enhance UV perception (blues)
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i + 2] = Math.min(255, data[i + 2] * 1.2); // Enhance blue to simulate UV sensitivity
+                }
+            }
+            
+            // Mosquito vision - very poor, heat-sensitive
+            function applyMosquitoVision(data, width, height, intensity) {
+                const factor = intensity / 100;
+                
+                // Create a thermal-like vision with very low detail
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Very low visual acuity - almost monochromatic perception
+                    const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+                    
+                    // Apply a dark green tint to simulate mosquito vision
+                    data[i] = brightness * 0.3 * factor;     // Very low red
+                    data[i + 1] = brightness * 0.8 * factor; // Higher green
+                    data[i + 2] = brightness * 0.4 * factor; // Low blue
+                }
+            }
+            
+            // Eagle vision - exceptional acuity, UV sensitivity
+            function applyEagleVision(data, width, height, intensity) {
+                const factor = intensity / 100;
+                
+                // Eagles have exceptional acuity and can see UV
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Enhance contrast
+                    const contrast = 1.2 * factor;
+                    data[i] = Math.min(255, 128 + (r - 128) * contrast);
+                    data[i + 1] = Math.min(255, 128 + (g - 128) * contrast);
+                    data[i + 2] = Math.min(255, 128 + (b - 128) * contrast);
+                    
+                    // Enhance UV/blue sensitivity
+                    data[i + 2] = Math.min(255, data[i + 2] * (1 + 0.3 * factor));
+                }
+            }
+            
+            // Mantis shrimp vision - extraordinary color perception
+            function applyMantisVision(data, width, height, intensity) {
+                const factor = intensity / 100;
+                
+                // Mantis shrimp have 12-16 photoreceptors (humans have 3)
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i];
+                    const g = data[i + 1];
+                    const b = data[i + 2];
+                    
+                    // Enhance color saturation dramatically
+                    const gray = (r * 0.299 + g * 0.587 + b * 0.114);
+                    const saturation = 1.5 * factor;
+                    
+                    // Simulate enhanced color perception
+                    data[i] = Math.min(255, gray + (r - gray) * saturation);
+                    data[i + 1] = Math.min(255, gray + (g - gray) * saturation);
+                    data[i + 2] = Math.min(255, gray + (b - gray) * saturation);
+                    
+                    // Add UV-like effects (simulate more spectral bands)
+                    if ((i/4) % width % 20 < 10 && Math.floor((i/4) / width) % 20 < 10) {
+                        data[i] = Math.min(255, data[i] * 1.2);
+                    } else if ((i/4) % width % 20 >= 10 && Math.floor((i/4) / width) % 20 >= 10) {
+                        data[i + 1] = Math.min(255, data[i + 1] * 1.2);
+                    } else {
+                        data[i + 2] = Math.min(255, data[i + 2] * 1.2);
+                    }
+                }
+            }
+            
+            // Apply noise to the image
+            function applyNoise(data, width, height, noiseLevel) {
+                const amount = noiseLevel / 100 * 50; // Scale noise level
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    const noise = (Math.random() * 2 - 1) * amount;
+                    
+                    data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                    data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+                    data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+                }
+            }
+            
+            // Apply field of view mask
+            function applyFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Clear the canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Apply different field of view masks based on animal
+                if (currentAnimal === 'houseFly' || currentAnimal === 'mosquito') {
+                    // Compound eye field of view - almost 360° but with a mosaic pattern
+                    applyCompoundEyeFieldOfView(ctx, sourceCanvas, fieldPercent);
+                } else if (currentAnimal === 'cat' || currentAnimal === 'dog') {
+                    // Wider field of view with vertical slit for cats or horizontal for dogs
+                    applyMammalFieldOfView(ctx, sourceCanvas, fieldPercent);
+                } else if (currentAnimal === 'eagle') {
+                    // Focused forward vision with high acuity in center
+                    applyBirdFieldOfView(ctx, sourceCanvas, fieldPercent);
+                } else if (currentAnimal === 'mantis') {
+                    // Mantis has special eyesight with two central regions
+                    applyMantisFieldOfView(ctx, sourceCanvas, fieldPercent);
+                } else {
+                    // Default circular field of view
+                    applyCircularFieldOfView(ctx, sourceCanvas, fieldPercent);
+                }
+            }
+            
+            // Circular field of view mask - default
+            function applyCircularFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Calculate radius based on field percent
+                const radius = Math.min(width, height) * (fieldPercent / 100);
+                
+                // Create circular mask
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius / 2, 0, Math.PI * 2);
+                ctx.closePath();
+                ctx.clip();
+                
+                // Draw image
+                ctx.drawImage(sourceCanvas, 0, 0);
+                ctx.restore();
+                
+                // Draw black outside the field of view
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+            }
+            
+            // Compound eye field of view for flies and mosquitoes
+            function applyCompoundEyeFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Draw base image
+                ctx.drawImage(sourceCanvas, 0, 0);
+                
+                // Create mosaic-like mask with edges fading to black
+                ctx.save();
+                
+                // Create a radial gradient for the edges
+                const radius = Math.min(width, height) * (fieldPercent / 100);
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius * 0.3, 
+                    centerX, centerY, radius * 0.6
+                );
+                
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, 'rgba(0,0,0,1)');
+                
+                // Apply the gradient as a mask
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, width, height);
+                
+                // Add a hexagonal pattern to suggest compound eyes
+                ctx.globalCompositeOperation = 'source-over';
+                const hexSize = 20;
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                ctx.lineWidth = 1;
+                
+                for (let x = 0; x < width; x += hexSize * 1.5) {
+                    for (let y = 0; y < height; y += hexSize * Math.sqrt(3)) {
+                        const offsetX = (Math.floor(y / (hexSize * Math.sqrt(3))) % 2) * hexSize * 0.75;
+                        
+                        ctx.beginPath();
+                        for (let i = 0; i < 6; i++) {
+                            const angle = (i * Math.PI / 3) - Math.PI / 6;
+                            const ptX = x + offsetX + hexSize * Math.cos(angle);
+                            const ptY = y + hexSize * Math.sin(angle);
+                            
+                            if (i === 0) {
+                                ctx.moveTo(ptX, ptY);
+                            } else {
+                                ctx.lineTo(ptX, ptY);
+                            }
+                        }
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+                }
+                
+                ctx.restore();
+                
+                // Draw black outside the field of view
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+            }
+            
+            // Mammalian field of view for cats and dogs
+            function applyMammalFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Adjust field for the animal type
+                const scaledField = fieldPercent * 1.2; // Mammals have wider field
+                
+                // Create elliptical field of view
+                ctx.save();
+                
+                // Oval shape - wider horizontally for peripheral vision
+                ctx.beginPath();
+                ctx.ellipse(
+                    centerX, centerY, 
+                    width * (scaledField / 200), 
+                    height * (scaledField / 300),
+                    0, 0, Math.PI * 2
+                );
+                ctx.closePath();
+                ctx.clip();
+                
+                // Draw image
+                ctx.drawImage(sourceCanvas, 0, 0);
+                
+                // Add slight vignette for peripheral vision
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, Math.min(width, height) * 0.2,
+                    centerX, centerY, Math.min(width, height) * 0.6
+                );
+                
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0.7)');
+                
+                ctx.fillStyle = gradient;
+                ctx.globalCompositeOperation = 'source-atop';
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.restore();
+                
+                // Add a slight blur to peripheral vision
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+                
+                // Add a pupil shape overlay
+                ctx.save();
+                ctx.globalCompositeOperation = 'multiply';
+                
+                if (currentAnimal === 'cat') {
+                    // Vertical slit pupil for cats
+                    const pupilWidth = width * 0.1;
+                    const pupilHeight = height * 0.7;
+                    
+                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                    ctx.beginPath();
+                    ctx.ellipse(
+                        centerX, centerY,
+                        pupilWidth, pupilHeight,
+                        0, 0, Math.PI * 2
+                    );
+                    ctx.fill();
+                } else if (currentAnimal === 'dog') {
+                    // Horizontal peripheral emphasis for dogs
+                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                    ctx.beginPath();
+                    ctx.rect(
+                        centerX - width * 0.4, centerY - height * 0.05,
+                        width * 0.8, height * 0.1
+                    );
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+            
+            // Bird field of view for eagles
+            function applyBirdFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Eagles have a more focused central vision with high acuity
+                ctx.save();
+                
+                // Draw base image
+                ctx.drawImage(sourceCanvas, 0, 0);
+                
+                // Create a high-acuity central region with peripheral vision
+                const radius = Math.min(width, height) * (fieldPercent / 200);
+                
+                // Create a magnification effect in the center (to simulate eagle's fovea)
+                ctx.save();
+                const magnificationCanvas = document.createElement('canvas');
+                magnificationCanvas.width = width;
+                magnificationCanvas.height = height;
+                const magCtx = magnificationCanvas.getContext('2d');
+                
+                // Draw the image on the magnification canvas
+                magCtx.drawImage(sourceCanvas, 0, 0);
+                
+                // Create a circular mask for the central vision area
+                ctx.globalCompositeOperation = 'destination-out';
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Reset composite operation
+                ctx.globalCompositeOperation = 'source-over';
+                
+                // Draw the magnified center portion
+                const zoomFactor = 1.2; // 20% zoom
+                const zoomSize = radius * 2;
+                const sourceX = centerX - radius / zoomFactor;
+                const sourceY = centerY - radius / zoomFactor;
+                const sourceWidth = zoomSize / zoomFactor;
+                const sourceHeight = zoomSize / zoomFactor;
+                
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(
+                    sourceCanvas,
+                    sourceX, sourceY, sourceWidth, sourceHeight,
+                    centerX - radius, centerY - radius, zoomSize, zoomSize
+                );
+                
+                // Add a subtle "targeting" overlay
+                ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius * 0.5, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX - radius * 0.7, centerY);
+                ctx.lineTo(centerX + radius * 0.7, centerY);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY - radius * 0.7);
+                ctx.lineTo(centerX, centerY + radius * 0.7);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // Add vignette for peripheral vision
+                const gradient = ctx.createRadialGradient(
+                    centerX, centerY, radius,
+                    centerX, centerY, radius * 2
+                );
+                
+                gradient.addColorStop(0, 'rgba(0,0,0,0)');
+                gradient.addColorStop(1, 'rgba(0,0,0,0.8)');
+                
+                ctx.fillStyle = gradient;
+                ctx.globalCompositeOperation = 'source-atop';
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.restore();
+                
+                // Draw black outside the field of view
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+            }
+            
+            // Mantis field of view for mantis shrimp
+            function applyMantisFieldOfView(ctx, sourceCanvas, fieldPercent) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Mantis shrimp have trinocular vision with three regions of the eye
+                ctx.save();
+                
+                // Draw base image
+                ctx.drawImage(sourceCanvas, 0, 0);
+                
+                // Create three overlapping visual fields
+                const radius = Math.min(width, height) * (fieldPercent / 250);
+                
+                // Apply a gradient overlay to create the visual fields
+                ctx.globalCompositeOperation = 'multiply';
+                
+                // First field (left)
+                const gradient1 = ctx.createRadialGradient(
+                    centerX - radius * 0.5, centerY, radius * 0.1,
+                    centerX - radius * 0.5, centerY, radius
+                );
+                
+                gradient1.addColorStop(0, 'rgba(255,200,200,0.7)');
+                gradient1.addColorStop(1, 'rgba(255,200,200,0)');
+                
+                ctx.fillStyle = gradient1;
+                ctx.fillRect(0, 0, width, height);
+                
+                // Second field (center)
+                const gradient2 = ctx.createRadialGradient(
+                    centerX, centerY, radius * 0.1,
+                    centerX, centerY, radius
+                );
+                
+                gradient2.addColorStop(0, 'rgba(200,255,200,0.7)');
+                gradient2.addColorStop(1, 'rgba(200,255,200,0)');
+                
+                ctx.fillStyle = gradient2;
+                ctx.fillRect(0, 0, width, height);
+                
+                // Third field (right)
+                const gradient3 = ctx.createRadialGradient(
+                    centerX + radius * 0.5, centerY, radius * 0.1,
+                    centerX + radius * 0.5, centerY, radius
+                );
+                
+                gradient3.addColorStop(0, 'rgba(200,200,255,0.7)');
+                gradient3.addColorStop(1, 'rgba(200,200,255,0)');
+                
+                ctx.fillStyle = gradient3;
+                ctx.fillRect(0, 0, width, height);
+                
+                // Create a prismatic effect at the edges
+                ctx.globalCompositeOperation = 'source-over';
+                const prismGradient = ctx.createLinearGradient(0, 0, width, height);
+                prismGradient.addColorStop(0, 'rgba(255,0,0,0.1)');
+                prismGradient.addColorStop(0.33, 'rgba(0,255,0,0.1)');
+                prismGradient.addColorStop(0.66, 'rgba(0,0,255,0.1)');
+                prismGradient.addColorStop(1, 'rgba(255,0,255,0.1)');
+                
+                ctx.fillStyle = prismGradient;
+                ctx.globalCompositeOperation = 'overlay';
+                ctx.fillRect(0, 0, width, height);
+                
+                // Create a vignette for the edges
+                const vignetteGradient = ctx.createRadialGradient(
+                    centerX, centerY, radius,
+                    centerX, centerY, radius * 2
+                );
+                
+                vignetteGradient.addColorStop(0, 'rgba(0,0,0,0)');
+                vignetteGradient.addColorStop(1, 'rgba(0,0,0,1)');
+                
+                ctx.fillStyle = vignetteGradient;
+                ctx.globalCompositeOperation = 'source-atop';
+                ctx.fillRect(0, 0, width, height);
+                
+                ctx.restore();
+                
+                // Draw black outside the field of view
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                ctx.fillStyle = 'black';
+                ctx.fillRect(0, 0, width, height);
+                ctx.restore();
+            }
+            
+            // Apply blur based on animal's visual acuity
+            function applyBlur(ctx, width, height, blurAmount) {
+                if (blurAmount <= 0) return;
+                
+                // Apply a simple box blur
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Copy current canvas to temp
+                tempCtx.drawImage(ctx.canvas, 0, 0);
+                
+                // Clear original canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Apply multiple passes of box blur for smoother results
+                const iterations = Math.min(3, Math.max(1, Math.floor(blurAmount)));
+                const blurSize = blurAmount;
+                
+                for (let i = 0; i < iterations; i++) {
+                    ctx.save();
+                    ctx.globalAlpha = 1 / (i + 1);
+                    
+                    // Draw 9 slightly offset copies for the blur effect
+                    for (let y = -1; y <= 1; y++) {
+                        for (let x = -1; x <= 1; x++) {
+                            ctx.drawImage(
+                                tempCanvas, 
+                                x * blurSize, y * blurSize,
+                                width, height
+                            );
+                        }
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+            
+            // Animal vision animation loop
+            function animateAnimalVision() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Apply animal vision effect
+                    applyAnimalVision(
+                        aCtx,
+                        currentAnimal,
+                        parseInt(animalBlurSlider.value),
+                        parseInt(animalIntensitySlider.value),
+                        parseInt(animalFieldSlider.value),
+                        parseInt(animalNoiseSlider.value)
+                    );
+                }
+                
+                requestAnimationFrame(animateAnimalVision);
+            }
+            
+            // Animal snapshot function
+            function takeAnimalSnapshot() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const imageDataUrl = animalCanvas.toDataURL('image/png');
+                    
+                    const snapshotEl = document.createElement('div');
+                    snapshotEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    snapshotEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageDataUrl}" class="card-img-top" alt="${currentAnimal} Vision ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <small class="text-muted">${currentAnimal} Vision ${snapshotCount}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    snapshotsDiv.prepend(snapshotEl);
+                    snapshotsContainer.style.display = 'block';
+                }
+            }
+            
+            // Animal video recording
+            function startAnimalRecording() {
+                if (animalIsRecording) return;
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    debugLog("Cannot record animal vision, video not ready", true);
+                    return;
+                }
+                
+                debugLog("Starting animal vision video recording...");
+                animalIsRecording = true;
+                animalRecordingFrames = [];
+                animalRecordVideo.textContent = "0.0s of 7.0s";
+                animalRecordVideo.disabled = true;
+                
+                let framesLeft = 35; // 7 seconds at 5fps
+                let totalFrames = framesLeft;
+                let elapsedTime = 0;
+                
+                const timerInterval = setInterval(() => {
+                    elapsedTime += 0.1;
+                    const timeDisplay = elapsedTime.toFixed(1);
+                    animalRecordVideo.textContent = `${timeDisplay}s of 7.0s`;
+                }, 100);
+                
+                function captureAnimalFrame() {
+                    if (framesLeft <= 0 || !animalIsRecording) {
+                        clearInterval(timerInterval);
+                        debugLog(`Captured all ${totalFrames} animal vision frames`);
+                        finishAnimalRecording();
+                        return;
+                    }
+                    
+                    try {
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = animalCanvas.width;
+                        frameCanvas.height = animalCanvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        frameCtx.drawImage(animalCanvas, 0, 0);
+                        animalRecordingFrames.push(frameCanvas);
+                        debugLog(`Captured animal vision frame ${totalFrames-framesLeft+1}/${totalFrames}`);
+                    } catch (e) {
+                        debugLog(`Error capturing animal vision frame: ${e.message}`, true);
+                    }
+                    
+                    framesLeft--;
+                    setTimeout(captureAnimalFrame, 200);
+                }
+                
+                captureAnimalFrame();
+            }
+            
+            function finishAnimalRecording() {
+                if (!animalIsRecording) return;
+                
+                animalRecordVideo.textContent = "Processing...";
+                animalRecordVideo.disabled = true;
+                
+                try {
+                    // Create video element using the same process as pixel cube recording
+                    const videoEl = document.createElement('div');
+                    videoEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create the video canvas and processing
+                    const videoCanvas = document.createElement('canvas');
+                    videoCanvas.width = animalCanvas.width;
+                    videoCanvas.height = animalCanvas.height;
+                    const videoCtx = videoCanvas.getContext('2d');
+                    
+                    const stream = videoCanvas.captureStream(30);
+                    const mimeType = getSupportedMimeType();
+                    
+                    const mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: mimeType,
+                        videoBitsPerSecond: 3000000
+                    });
+                    
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) chunks.push(e.data);
+                    };
+                    
+                    // Create the video element UI
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+                    
+                    const animContainer = document.createElement('div');
+                    animContainer.className = 'animation-container';
+                    animContainer.style.position = 'relative';
+                    animContainer.style.width = '100%';
+                    animContainer.style.height = 'auto';
+                    animContainer.style.aspectRatio = '1/1';
+                    animContainer.style.overflow = 'hidden';
+                    animContainer.style.backgroundColor = '#000';
+                    
+                    const animImage = document.createElement('img');
+                    animImage.style.width = '100%';
+                    animImage.style.height = '100%';
+                    animContainer.appendChild(animImage);
+                    
+                    // Process frames and create video
+                    const frameDataUrls = animalRecordingFrames.map(frame => {
+                        return frame.toDataURL('image/jpeg', 0.7);
+                    });
+                    
+                    animImage.src = frameDataUrls[0];
+                    
+                    // Create controls
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'animation-controls d-flex mt-2 justify-content-between';
+                    
+                    const animBtnsDiv = document.createElement('div');
+                    animBtnsDiv.className = 'd-flex';
+                    
+                    const playPauseBtn = document.createElement('button');
+                    playPauseBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                    playPauseBtn.textContent = 'Play';
+                    
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.textContent = 'Reset';
+                    
+                    const downloadsDiv = document.createElement('div');
+                    downloadsDiv.className = 'd-flex';
+                    
+                    // Handle video creation
+                    mediaRecorder.onstop = () => {
+                        const videoBlob = new Blob(chunks, { type: mimeType || 'video/webm' });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        
+                        const downloadVideoBtn = document.createElement('a');
+                        downloadVideoBtn.className = 'btn btn-sm btn-outline-primary';
+                        downloadVideoBtn.href = videoUrl;
+                        downloadVideoBtn.download = `${currentAnimal}-vision-video-${snapshotCount}.${mimeType.includes('mp4') ? 'mp4' : 'webm'}`;
+                        downloadVideoBtn.textContent = 'Download Video';
+                        
+                        downloadsDiv.appendChild(downloadVideoBtn);
+                    };
+                    
+                    // Animation controls
+                    let isPlaying = false;
+                    let currentFrame = 0;
+                    let animationInterval;
+                    
+                    function updateAnimation() {
+                        currentFrame = (currentFrame + 1) % frameDataUrls.length;
+                        animImage.src = frameDataUrls[currentFrame];
+                    }
+                    
+                    function togglePlayPause() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            playPauseBtn.textContent = 'Play';
+                        } else {
+                            animationInterval = setInterval(updateAnimation, 200);
+                            playPauseBtn.textContent = 'Pause';
+                        }
+                        isPlaying = !isPlaying;
+                    }
+                    
+                    function resetAnimation() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            isPlaying = false;
+                            playPauseBtn.textContent = 'Play';
+                        }
+                        currentFrame = 0;
+                        animImage.src = frameDataUrls[0];
+                    }
+                    
+                    playPauseBtn.addEventListener('click', togglePlayPause);
+                    resetBtn.addEventListener('click', resetAnimation);
+                    
+                    // Assemble UI
+                    animBtnsDiv.appendChild(playPauseBtn);
+                    animBtnsDiv.appendChild(resetBtn);
+                    controlsDiv.appendChild(animBtnsDiv);
+                    controlsDiv.appendChild(downloadsDiv);
+                    
+                    cardBody.appendChild(animContainer);
+                    cardBody.appendChild(controlsDiv);
+                    
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'card-footer text-center';
+                    cardFooter.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">${currentAnimal} Vision</small>
+                            <small class="text-success">5 fps animation</small>
+                        </div>
+                    `;
+                    
+                    cardDiv.appendChild(cardBody);
+                    cardDiv.appendChild(cardFooter);
+                    videoEl.appendChild(cardDiv);
+                    
+                    // Add to gallery
+                    snapshotsDiv.prepend(videoEl);
+                    snapshotsContainer.style.display = 'block';
+                    
+                    // Start video creation
+                    mediaRecorder.start(100);
+                    let frameIndex = 0;
+                    
+                    function processNextVideoFrame() {
+                        if (frameIndex >= frameDataUrls.length) {
+                            mediaRecorder.stop();
+                            return;
+                        }
+                        
+                        const img = new Image();
+                        img.onload = () => {
+                            videoCtx.fillStyle = "#000";
+                            videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.drawImage(img, 0, 0);
+                            
+                            animalRecordVideo.textContent = `Creating video ${Math.round((frameIndex+1) / frameDataUrls.length * 100)}%`;
+                            
+                            setTimeout(() => {
+                                frameIndex++;
+                                processNextVideoFrame();
+                            }, 200);
+                        };
+                        
+                        img.onerror = () => {
+                            debugLog(`Error loading animal vision frame ${frameIndex}`, true);
+                            frameIndex++;
+                            processNextVideoFrame();
+                        };
+                        
+                        img.src = frameDataUrls[frameIndex];
+                    }
+                    
+                    processNextVideoFrame();
+                    
+                } catch (error) {
+                    debugLog("Error processing animal vision frames: " + error.message, true);
+                    alert("Error creating animal vision animation: " + error.message);
+                } finally {
+                    animalIsRecording = false;
+                    animalRecordingFrames = [];
+                    animalRecordVideo.textContent = "Capture Video";
+                    animalRecordVideo.disabled = false;
+                }
+            }
+            
+            // Effect controls
+            const segmentsSlider = document.getElementById('kaleidoscopeSegments');
+            const intensitySlider = document.getElementById('kaleidoscopeIntensity');
+            const rotationSlider = document.getElementById('kaleidoscopeRotation');
+            const zoomSlider = document.getElementById('kaleidoscopeZoom');
+            const effectButtons = document.querySelectorAll('.kaleidoscope-effect-btn');
+            
+            // Value display spans
+            const segmentsValue = document.getElementById('segmentsValue');
+            const intensityValue = document.getElementById('intensityValue');
+            const rotationValue = document.getElementById('rotationValue');
+            const zoomValue = document.getElementById('zoomValue');
+            
+            // Function to update value displays
+            function updateValueDisplays() {
+                segmentsValue.textContent = segmentsSlider.value;
+                intensityValue.textContent = intensitySlider.value;
+                rotationValue.textContent = rotationSlider.value;
+                zoomValue.textContent = zoomSlider.value;
+            }
+            
+            // Add event listeners for sliders
+            segmentsSlider.addEventListener('input', updateValueDisplays);
+            intensitySlider.addEventListener('input', updateValueDisplays);
+            rotationSlider.addEventListener('input', updateValueDisplays);
+            zoomSlider.addEventListener('input', updateValueDisplays);
+            
+            // Kaleidoscope state
+            let currentKaleidoscopeEffect = 'basicBitch';
+            let kaleidoscopeRotationAngle = 0;
+            let kaleidoscopeIsRecording = false;
+            let kaleidoscopeRecordingFrames = [];
+            
+            // Initialize kaleidoscope canvas
+            kaleidoscopeCanvas.width = 576;
+            kaleidoscopeCanvas.height = 576;
+            const kCtx = kaleidoscopeCanvas.getContext('2d');
+            
+            // Draw initial message on kaleidoscope canvas
+            kCtx.fillStyle = "#444";
+            kCtx.fillRect(0, 0, kaleidoscopeCanvas.width, kaleidoscopeCanvas.height);
+            kCtx.fillStyle = "#f00";
+            kCtx.font = "24px Arial";
+            kCtx.fillText("Click 'Turn Camera On' to start", 160, kaleidoscopeCanvas.height/2);
+            
+            // Set default values for controls
+            segmentsSlider.value = '10';
+            intensitySlider.value = '10';
+            rotationSlider.value = '0';
+            zoomSlider.value = '100';
+            updateValueDisplays();
+            
+            // Effect button click handler
+            effectButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    effectButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    currentKaleidoscopeEffect = button.dataset.effect;
+                    debugLog(`Switched to ${currentKaleidoscopeEffect} effect`);
+                });
+            });
+            
+            // Initialize kaleidoscope webcam
+            async function initKaleidoscopeWebcam() {
+                try {
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('WebRTC API not supported in this browser');
+                    }
+
+                    // If we already have a stream, use it
+                    if (currentStream && video.srcObject) {
+                        // Show kaleidoscope view
+                        kaleidoscopeStartPrompt.style.display = 'none';
+                        kaleidoscopeContainer.style.display = 'block';
+                        kaleidoscopeControls.style.display = 'block';
+                        
+                        // Start kaleidoscope animation
+                        animateKaleidoscope();
+                        
+                        debugLog('Kaleidoscope using existing camera stream');
+                        return;
+                    }
+
+                    // Otherwise initialize new stream
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { 
+                            facingMode: currentFacingMode,
+                            width: { ideal: 576 },
+                            height: { ideal: 576 },
+                            aspectRatio: { ideal: 1 }
+                        } 
+                    });
+
+                    video.srcObject = stream;
+                    currentStream = stream;
+
+                    // Wait for video to be ready
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            video.play().then(resolve);
+                        };
+                    });
+                    
+                    // Show kaleidoscope view
+                    kaleidoscopeStartPrompt.style.display = 'none';
+                    kaleidoscopeContainer.style.display = 'block';
+                    kaleidoscopeControls.style.display = 'block';
+                    
+                    // Update camera switch button text
+                    kaleidoscopeSwitchCamera.textContent = `Switch to ${currentFacingMode === 'user' ? 'Back' : 'Front'} Camera`;
+                    
+                    // Start kaleidoscope animation
+                    animateKaleidoscope();
+                    
+                    debugLog('Kaleidoscope camera initialized');
+                } catch (err) {
+                    debugLog('Kaleidoscope camera error: ' + err.message, true);
+                    errorMessage.textContent = 'Failed to initialize camera: ' + err.message;
+                    errorMessage.style.display = 'block';
+                }
+            }
+            
+            // Kaleidoscope effect rendering
+            function applyKaleidoscopeEffect(ctx, segments, intensity, zoom, effect) {
+                const width = ctx.canvas.width;
+                const height = ctx.canvas.height;
+                const centerX = width / 2;
+                const centerY = height / 2;
+                
+                // Create temporary canvas for source image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const tempCtx = tempCanvas.getContext('2d');
+                
+                // Draw video frame
+                tempCtx.drawImage(video, 0, 0, width, height);
+                
+                // Clear main canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                // Apply selected effect
+                switch(effect) {
+                    case 'basicBitch':
+                        // Spiral tunnel effect
+                        const maxLayers = 12;
+                        const scaleStep = 0.85;
+                        let currentScale = 1.0 * (zoom/100);
+                        
+                        for(let i = 0; i < maxLayers; i++) {
+                            ctx.save();
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate(kaleidoscopeRotationAngle + (i * 0.2));
+                            ctx.scale(currentScale, currentScale);
+                            ctx.drawImage(tempCanvas, -centerX, -centerY);
+                            ctx.restore();
+                            
+                            currentScale *= scaleStep;
+                        }
+                        break;
+                        
+                    case 'fractalTwist':
+                        // Fractal-like recursive effect
+                        for(let i = 0; i < segments; i++) {
+                            const scale = 1 - (i * 0.1);
+                            ctx.save();
+                            ctx.translate(centerX, centerY);
+                            ctx.rotate((i * 2 * Math.PI / segments) + kaleidoscopeRotationAngle);
+                            ctx.scale(scale * zoom/100, scale * zoom/100);
+                            ctx.drawImage(tempCanvas, -centerX, -centerY);
+                            ctx.restore();
+                        }
+                        break;
+                        
+                    case 'mirrorMaze':
+                        // Mirror maze effect
+                        const tileSize = width / (segments/2);
+                        for(let x = 0; x < width; x += tileSize) {
+                            for(let y = 0; y < height; y += tileSize) {
+                                ctx.save();
+                                ctx.translate(x + tileSize/2, y + tileSize/2);
+                                ctx.rotate(kaleidoscopeRotationAngle);
+                                ctx.scale(zoom/100, zoom/100);
+                                ctx.drawImage(tempCanvas, -tileSize/2, -tileSize/2, tileSize, tileSize);
+                                ctx.restore();
+                            }
+                        }
+                        break;
+                        
+                    case 'circularShards':
+                        // Night Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        
+                        // Apply green tint and glow
+                        ctx.globalCompositeOperation = 'screen';
+                        ctx.fillStyle = 'rgba(0, 255, 0, 0.3)';
+                        ctx.fillRect(0, 0, width, height);
+                        
+                        // Add noise effect
+                        const imageData = ctx.getImageData(0, 0, width, height);
+                        const data = imageData.data;
+                        for (let i = 0; i < data.length; i += 4) {
+                            const noise = Math.random() * 20 - 10;
+                            data[i] = Math.min(255, Math.max(0, data[i] + noise));
+                            data[i + 1] = Math.min(255, Math.max(0, data[i + 1] + noise));
+                            data[i + 2] = Math.min(255, Math.max(0, data[i + 2] + noise));
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        ctx.restore();
+                        break;
+                        
+                    case 'prismaticBurst':
+                        // Thermal Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        const thermalData = ctx.getImageData(0, 0, width, height);
+                        const pixels = thermalData.data;
+                        for (let i = 0; i < pixels.length; i += 4) {
+                            const avg = (pixels[i] + pixels[i + 1] + pixels[i + 2]) / 3;
+                            if (avg < 85) {
+                                pixels[i] = avg * 3; // Red
+                                pixels[i + 1] = 0;   // Green
+                                pixels[i + 2] = 0;   // Blue
+                            } else if (avg < 170) {
+                                pixels[i] = 255;     // Red
+                                pixels[i + 1] = avg;  // Green
+                                pixels[i + 2] = 0;    // Blue
+                            } else {
+                                pixels[i] = 255;      // Red
+                                pixels[i + 1] = 255;  // Green
+                                pixels[i + 2] = avg - 170; // Blue
+                            }
+                        }
+                        ctx.putImageData(thermalData, 0, 0);
+                        ctx.restore();
+                        break;
+                        
+                    case 'colorInversion':
+                        // X-Ray Vision effect
+                        ctx.save();
+                        ctx.drawImage(tempCanvas, 0, 0);
+                        const xrayData = ctx.getImageData(0, 0, width, height);
+                        const xrayPixels = xrayData.data;
+                        for (let i = 0; i < xrayPixels.length; i += 4) {
+                            const avg = (xrayPixels[i] + xrayPixels[i + 1] + xrayPixels[i + 2]) / 3;
+                            const inverted = 255 - avg;
+                            xrayPixels[i] = inverted;
+                            xrayPixels[i + 1] = inverted;
+                            xrayPixels[i + 2] = inverted * 1.2;
+                        }
+                        ctx.putImageData(xrayData, 0, 0);
+                        // Add blue tint
+                        ctx.globalCompositeOperation = 'overlay';
+                        ctx.fillStyle = 'rgba(0, 0, 255, 0.2)';
+                        ctx.fillRect(0, 0, width, height);
+                        ctx.restore();
+                        break;
+                }
+                
+                // Apply intensity blend
+                ctx.globalAlpha = intensity / 100;
+                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.globalAlpha = 1.0;
+            }
+            
+            // Kaleidoscope animation loop
+            function animateKaleidoscope() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Update rotation angle based on rotation speed
+                    kaleidoscopeRotationAngle += parseFloat(rotationSlider.value) * 0.01;
+                    
+                    // Apply kaleidoscope effect
+                    applyKaleidoscopeEffect(
+                        kCtx,
+                        parseInt(segmentsSlider.value),
+                        parseInt(intensitySlider.value),
+                        parseInt(zoomSlider.value),
+                        currentKaleidoscopeEffect
+                    );
+                }
+                
+                requestAnimationFrame(animateKaleidoscope);
+            }
+            
+            // Kaleidoscope snapshot function
+            function takeKaleidoscopeSnapshot() {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    const imageDataUrl = kaleidoscopeCanvas.toDataURL('image/png');
+                    
+                    const snapshotEl = document.createElement('div');
+                    snapshotEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    snapshotEl.innerHTML = `
+                        <div class="card">
+                            <img src="${imageDataUrl}" class="card-img-top" alt="Kaleidoscope ${snapshotCount}">
+                            <div class="card-footer text-center">
+                                <small class="text-muted">Kaleidoscope ${snapshotCount}</small>
+                            </div>
+                        </div>
+                    `;
+                    
+                    snapshotsDiv.prepend(snapshotEl);
+                    snapshotsContainer.style.display = 'block';
+                }
+            }
+            
+            // Kaleidoscope video recording
+            function startKaleidoscopeRecording() {
+                if (kaleidoscopeIsRecording) return;
+                if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+                    debugLog("Cannot record kaleidoscope, video not ready", true);
+                    return;
+                }
+                
+                debugLog("Starting kaleidoscope video recording...");
+                kaleidoscopeIsRecording = true;
+                kaleidoscopeRecordingFrames = [];
+                kaleidoscopeRecordVideo.textContent = "0.0s of 7.0s";
+                kaleidoscopeRecordVideo.disabled = true;
+                
+                let framesLeft = 35; // 7 seconds at 5fps
+                let totalFrames = framesLeft;
+                let elapsedTime = 0;
+                
+                const timerInterval = setInterval(() => {
+                    elapsedTime += 0.1;
+                    const timeDisplay = elapsedTime.toFixed(1);
+                    kaleidoscopeRecordVideo.textContent = `${timeDisplay}s of 7.0s`;
+                }, 100);
+                
+                function captureKaleidoscopeFrame() {
+                    if (framesLeft <= 0 || !kaleidoscopeIsRecording) {
+                        clearInterval(timerInterval);
+                        debugLog(`Captured all ${totalFrames} kaleidoscope frames`);
+                        finishKaleidoscopeRecording();
+                        return;
+                    }
+                    
+                    try {
+                        const frameCanvas = document.createElement('canvas');
+                        frameCanvas.width = kaleidoscopeCanvas.width;
+                        frameCanvas.height = kaleidoscopeCanvas.height;
+                        const frameCtx = frameCanvas.getContext('2d');
+                        
+                        frameCtx.drawImage(kaleidoscopeCanvas, 0, 0);
+                        kaleidoscopeRecordingFrames.push(frameCanvas);
+                        debugLog(`Captured kaleidoscope frame ${totalFrames-framesLeft+1}/${totalFrames}`);
+                    } catch (e) {
+                        debugLog(`Error capturing kaleidoscope frame: ${e.message}`, true);
+                    }
+                    
+                    framesLeft--;
+                    setTimeout(captureKaleidoscopeFrame, 200);
+                }
+                
+                captureKaleidoscopeFrame();
+            }
+            
+            function finishKaleidoscopeRecording() {
+                if (!kaleidoscopeIsRecording) return;
+                
+                kaleidoscopeRecordVideo.textContent = "Processing...";
+                kaleidoscopeRecordVideo.disabled = true;
+                
+                try {
+                    // Create video element using the same process as pixel cube recording
+                    const videoEl = document.createElement('div');
+                    videoEl.className = 'col-6 col-md-4 col-lg-3';
+                    snapshotCount++;
+                    
+                    // Create the video canvas and processing
+                    const videoCanvas = document.createElement('canvas');
+                    videoCanvas.width = kaleidoscopeCanvas.width;
+                    videoCanvas.height = kaleidoscopeCanvas.height;
+                    const videoCtx = videoCanvas.getContext('2d');
+                    
+                    const stream = videoCanvas.captureStream(30);
+                    const mimeType = getSupportedMimeType();
+                    
+                    const mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: mimeType,
+                        videoBitsPerSecond: 3000000
+                    });
+                    
+                    const chunks = [];
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data.size > 0) chunks.push(e.data);
+                    };
+                    
+                    // Create the video element UI
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    
+                    const cardBody = document.createElement('div');
+                    cardBody.className = 'card-body p-2 text-center';
+                    
+                    const animContainer = document.createElement('div');
+                    animContainer.className = 'animation-container';
+                    animContainer.style.position = 'relative';
+                    animContainer.style.width = '100%';
+                    animContainer.style.height = 'auto';
+                    animContainer.style.aspectRatio = '1/1';
+                    animContainer.style.overflow = 'hidden';
+                    animContainer.style.backgroundColor = '#000';
+                    
+                    const animImage = document.createElement('img');
+                    animImage.style.width = '100%';
+                    animImage.style.height = '100%';
+                    animContainer.appendChild(animImage);
+                    
+                    // Process frames and create video
+                    const frameDataUrls = kaleidoscopeRecordingFrames.map(frame => {
+                        return frame.toDataURL('image/jpeg', 0.7);
+                    });
+                    
+                    animImage.src = frameDataUrls[0];
+                    
+                    // Create controls
+                    const controlsDiv = document.createElement('div');
+                    controlsDiv.className = 'animation-controls d-flex mt-2 justify-content-between';
+                    
+                    const animBtnsDiv = document.createElement('div');
+                    animBtnsDiv.className = 'd-flex';
+                    
+                    const playPauseBtn = document.createElement('button');
+                    playPauseBtn.className = 'btn btn-sm btn-outline-primary me-2';
+                    playPauseBtn.textContent = 'Play';
+                    
+                    const resetBtn = document.createElement('button');
+                    resetBtn.className = 'btn btn-sm btn-outline-secondary';
+                    resetBtn.textContent = 'Reset';
+                    
+                    const downloadsDiv = document.createElement('div');
+                    downloadsDiv.className = 'd-flex';
+                    
+                    // Handle video creation
+                    mediaRecorder.onstop = () => {
+                        const videoBlob = new Blob(chunks, { type: mimeType || 'video/webm' });
+                        const videoUrl = URL.createObjectURL(videoBlob);
+                        
+                        const downloadVideoBtn = document.createElement('a');
+                        downloadVideoBtn.className = 'btn btn-sm btn-outline-primary';
+                        downloadVideoBtn.href = videoUrl;
+                        downloadVideoBtn.download = `kaleidoscope-video-${snapshotCount}.${mimeType.includes('mp4') ? 'mp4' : 'webm'}`;
+                        downloadVideoBtn.textContent = 'Download Video';
+                        
+                        downloadsDiv.appendChild(downloadVideoBtn);
+                    };
+                    
+                    // Animation controls
+                    let isPlaying = false;
+                    let currentFrame = 0;
+                    let animationInterval;
+                    
+                    function updateAnimation() {
+                        currentFrame = (currentFrame + 1) % frameDataUrls.length;
+                        animImage.src = frameDataUrls[currentFrame];
+                    }
+                    
+                    function togglePlayPause() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            playPauseBtn.textContent = 'Play';
+                        } else {
+                            animationInterval = setInterval(updateAnimation, 200);
+                            playPauseBtn.textContent = 'Pause';
+                        }
+                        isPlaying = !isPlaying;
+                    }
+                    
+                    function resetAnimation() {
+                        if (isPlaying) {
+                            clearInterval(animationInterval);
+                            isPlaying = false;
+                            playPauseBtn.textContent = 'Play';
+                        }
+                        currentFrame = 0;
+                        animImage.src = frameDataUrls[0];
+                    }
+                    
+                    playPauseBtn.addEventListener('click', togglePlayPause);
+                    resetBtn.addEventListener('click', resetAnimation);
+                    
+                    // Assemble UI
+                    animBtnsDiv.appendChild(playPauseBtn);
+                    animBtnsDiv.appendChild(resetBtn);
+                    controlsDiv.appendChild(animBtnsDiv);
+                    controlsDiv.appendChild(downloadsDiv);
+                    
+                    cardBody.appendChild(animContainer);
+                    cardBody.appendChild(controlsDiv);
+                    
+                    const cardFooter = document.createElement('div');
+                    cardFooter.className = 'card-footer text-center';
+                    cardFooter.innerHTML = `
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Frames: ${frameDataUrls.length}</small>
+                            <small class="text-success">5 fps animation</small>
+                        </div>
+                    `;
+                    
+                    cardDiv.appendChild(cardBody);
+                    cardDiv.appendChild(cardFooter);
+                    videoEl.appendChild(cardDiv);
+                    
+                    // Add to gallery
+                    snapshotsDiv.prepend(videoEl);
+                    snapshotsContainer.style.display = 'block';
+                    
+                    // Start video creation
+                    mediaRecorder.start(100);
+                    let frameIndex = 0;
+                    
+                    function processNextVideoFrame() {
+                        if (frameIndex >= frameDataUrls.length) {
+                            mediaRecorder.stop();
+                            return;
+                        }
+                        
+                        const img = new Image();
+                        img.onload = () => {
+                            videoCtx.fillStyle = "#000";
+                            videoCtx.fillRect(0, 0, videoCanvas.width, videoCanvas.height);
+                            videoCtx.drawImage(img, 0, 0);
+                            
+                            kaleidoscopeRecordVideo.textContent = `Creating video ${Math.round((frameIndex+1) / frameDataUrls.length * 100)}%`;
+                            
+                            setTimeout(() => {
+                                frameIndex++;
+                                processNextVideoFrame();
+                            }, 200);
+                        };
+                        
+                        img.onerror = () => {
+                            debugLog(`Error loading kaleidoscope frame ${frameIndex}`, true);
+                            frameIndex++;
+                            processNextVideoFrame();
+                        };
+                        
+                        img.src = frameDataUrls[frameIndex];
+                    }
+                    
+                    processNextVideoFrame();
+                    
+                } catch (error) {
+                    debugLog("Error processing kaleidoscope frames: " + error.message, true);
+                    alert("Error creating kaleidoscope animation: " + error.message);
+                } finally {
+                    kaleidoscopeIsRecording = false;
+                    kaleidoscopeRecordingFrames = [];
+                    kaleidoscopeRecordVideo.textContent = "Capture Video";
+                    kaleidoscopeRecordVideo.disabled = false;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
