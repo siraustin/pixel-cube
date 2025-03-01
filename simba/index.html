@@ -837,6 +837,7 @@
         case "arrowleft":
         case "a":
         case "j":
+          e.preventDefault();
           if (!collides(0, -1, currentPiece)) {
             currentPos.col--;
             playSound(moveSound);
@@ -845,6 +846,7 @@
         case "arrowright":
         case "d":
         case "l":
+          e.preventDefault();
           if (!collides(0, 1, currentPiece)) {
             currentPos.col++;
             playSound(moveSound);
@@ -853,19 +855,23 @@
         case "arrowdown":
         case "s":
         case "k":
+          e.preventDefault();
           drop();
           break;
         case "arrowup":
         case "w":
         case "i":
+          e.preventDefault();
           rotatePiece();
           playSound(rotateSound);
           break;
         case " ":
         case "p":
+          e.preventDefault();
           togglePause();
           break;
         case "m":
+          e.preventDefault();
           soundEnabled = !soundEnabled;
           break;
       }
