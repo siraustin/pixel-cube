@@ -11,6 +11,17 @@
       color: #ddd;
       font-family: sans-serif;
       text-align: center;
+      position: relative;
+    }
+    #backgroundCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.1;
+      pointer-events: none;
     }
     canvas {
       background: #000;
@@ -117,9 +128,26 @@
   </style>
 </head>
 <body>
+  <canvas id="backgroundCanvas"></canvas>
   <h1>Emoji Icon Crush</h1>
 
-  <!-- Simple form to pick or enter custom emojis/icons -->
+  <canvas id="gameCanvas" width="300" height="600"></canvas>
+
+  <div id="controls">
+    <button id="startPauseBtn">Start Game</button>
+    <button id="restartBtn">Restart</button>
+    <button id="updateEmojisBtn">Update Emojis</button>
+  </div>
+
+  <div id="info">
+    <p>
+      Controls: Arrow keys, WASD, or IJKL to move/rotate. Each block shows one of the selected emojis.
+      When 3+ same emojis connect (horizontal or vertical), they vanish (Candy Crush style).
+      Score combos by setting off chain reactions!
+    </p>
+  </div>
+
+  <!-- Moved emoji selection below -->
   <div id="emojiSelection">
     <div class="emojiField">
       <label for="emoji1">Emoji / Icon #1</label>
@@ -147,14 +175,6 @@
     </div>
   </div>
 
-  <canvas id="gameCanvas" width="300" height="600"></canvas>
-
-  <div id="controls">
-    <button id="startPauseBtn">Start Game</button>
-    <button id="restartBtn">Restart</button>
-    <button id="updateEmojisBtn">Update Emojis</button>
-  </div>
-
   <!-- Add audio elements or oscillator-based placeholders for game sounds -->
   <audio id="moveSound" preload="auto"></audio>
   <audio id="rotateSound" preload="auto"></audio>
@@ -162,15 +182,49 @@
   <audio id="clearSound" preload="auto"></audio>
   <audio id="gameOverSound" preload="auto"></audio>
 
-  <div id="info">
-    <p>
-      Arrow keys to move/rotate. Each tetromino block shows one of the selected emojis (or icons).
-      When 3+ same emojis connect (horizontal or vertical), they vanish (Candy Crush style).
-      Score combos by setting off chain reactions!
-    </p>
-  </div>
-
   <script>
+    // Add background setup
+    const bgCanvas = document.getElementById('backgroundCanvas');
+    const bgCtx = bgCanvas.getContext('2d');
+
+    function updateBackgroundSize() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+
+    function drawBackground() {
+      const tileSize = 100;
+      const cols = Math.ceil(bgCanvas.width / tileSize);
+      const rows = Math.ceil(bgCanvas.height / tileSize);
+      
+      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+      
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+          bgCtx.fillStyle = "#000";
+          bgCtx.fillRect(c * tileSize, r * tileSize, tileSize, tileSize);
+          bgCtx.fillStyle = "#fff";
+          bgCtx.font = `${tileSize * 0.7}px sans-serif`;
+          bgCtx.textAlign = "center";
+          bgCtx.textBaseline = "middle";
+          bgCtx.fillText(emoji, c * tileSize + tileSize/2, r * tileSize + tileSize/2);
+        }
+      }
+    }
+
+    // Update background when window is resized
+    window.addEventListener('resize', () => {
+      updateBackgroundSize();
+      drawBackground();
+    });
+
+    // Update background when emojis change
+    function updateBackground() {
+      updateBackgroundSize();
+      drawBackground();
+    }
+
     /************************************************************
      * 1. BASIC SOUND SETUP AND UTILITY
      ************************************************************/
@@ -723,23 +777,31 @@
      ************************************************************/
     document.addEventListener("keydown", e => {
       if (!isGameActive || isPaused || !currentPiece) return;
-      switch (e.key) {
-        case "ArrowLeft":
+      switch (e.key.toLowerCase()) {
+        case "arrowleft":
+        case "a":
+        case "j":
           if (!collides(0, -1, currentPiece)) {
             currentPos.col--;
             playSound(moveSound);
           }
           break;
-        case "ArrowRight":
+        case "arrowright":
+        case "d":
+        case "l":
           if (!collides(0, 1, currentPiece)) {
             currentPos.col++;
             playSound(moveSound);
           }
           break;
-        case "ArrowDown":
+        case "arrowdown":
+        case "s":
+        case "k":
           drop();
           break;
-        case "ArrowUp":
+        case "arrowup":
+        case "w":
+        case "i":
           rotatePiece();
           playSound(rotateSound);
           break;
@@ -768,6 +830,7 @@
     // Update the emojis array from input fields
     updateEmojisBtn.addEventListener("click", () => {
       emojis = emojiFields.map(field => field.value.trim() || '❓');
+      updateBackground();
       alert("Emojis updated! Future pieces will use the new emoji set.");
     });
 
@@ -852,10 +915,11 @@
 
     // Initialize
     function init() {
-      // Initialize empty board
       for (let r = 0; r < ROWS; r++) {
         board[r] = Array(COLS).fill(null);
       }
+      updateBackgroundSize();
+      updateBackground();
       drawBoard();
       startLogic();
     }
