@@ -1211,30 +1211,50 @@
     }
 
     function rotatePiece() {
-      // basic 2D rotation for shape coords around the first block
       const shape = currentPiece.shapeCoords;
-      const pivot = shape[0]; // pivot on the first block
-      for (let i = 1; i < shape.length; i++) {
-        const r = shape[i][0] - pivot[0];
-        const c = shape[i][1] - pivot[1];
-        // rotate 90 deg
-        const newR = c;
-        const newC = -r;
-        shape[i][0] = pivot[0] + newR;
-        shape[i][1] = pivot[1] + newC;
+      
+      // Find the center of the piece
+      let minRow = Infinity, maxRow = -Infinity;
+      let minCol = Infinity, maxCol = -Infinity;
+      
+      // Find bounds of the piece
+      for (const [r, c] of shape) {
+        minRow = Math.min(minRow, r);
+        maxRow = Math.max(maxRow, r);
+        minCol = Math.min(minCol, c);
+        maxCol = Math.max(maxCol, c);
       }
-      // if it collides, rotate back
+      
+      // Calculate center point
+      const centerRow = (minRow + maxRow) / 2;
+      const centerCol = (minCol + maxCol) / 2;
+      
+      // Create a copy of the current shape
+      const newShape = shape.map(([r, c]) => {
+        // Translate to origin
+        const relativeRow = r - centerRow;
+        const relativeCol = c - centerCol;
+        
+        // Rotate 90 degrees clockwise
+        const newRelativeRow = relativeCol;
+        const newRelativeCol = -relativeRow;
+        
+        // Translate back and round to nearest integer
+        return [
+          Math.round(newRelativeRow + centerRow),
+          Math.round(newRelativeCol + centerCol)
+        ];
+      });
+      
+      // Test if new position is valid
+      const originalShape = shape.map(coord => [...coord]);
+      currentPiece.shapeCoords = newShape;
+      
       if (collides(0, 0, currentPiece)) {
-        // rotate back
-        for (let i = 1; i < shape.length; i++) {
-          const r = shape[i][0] - pivot[0];
-          const c = shape[i][1] - pivot[1];
-          // rotate -90 deg
-          const oldR = -c;
-          const oldC = r;
-          shape[i][0] = pivot[0] + oldR;
-          shape[i][1] = pivot[1] + oldC;
-        }
+        // If collision, restore original shape
+        currentPiece.shapeCoords = originalShape;
+      } else {
+        playSound(rotateSound);
       }
     }
 
